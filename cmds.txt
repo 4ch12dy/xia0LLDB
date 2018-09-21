@@ -1,0 +1,5 @@
+
+
+command regex pcc 's/(.+)/process connect connect%1/'
+
+command regex ivars -h "Dumps all ivars for an instance of a particular class which inherits from NSObject (iOS, NSObject subclass only)" -s "ivars [UIView new]" -- 's/(.+)/expression -lobjc -O -- [%1 _ivarDescription]/'
