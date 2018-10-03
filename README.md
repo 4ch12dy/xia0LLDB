@@ -10,7 +10,7 @@
 
 - `xbr`可以直接对OC函数下断点，即使macho符号表被strip。例如：`xbr "-[yourClass yourMethod]"`
 
-- `sbt`代替系统的`bt`命令，专门为了strip后的栈符号恢复。仅仅输入`sbt`即可。如下效果：
+- `sbt`代替系统的`bt`命令，专门为了strip后的栈符号恢复。仅仅输入`sbt`即可。`sbt`还可以恢复block函数符号，通过提供的ida python脚本得到的json文件，然后输入`sbt -f block_json_file_path` 即可解析block符号。如下效果：
 
   ![image-20180921112745948](./resource/bt.png)
 
@@ -18,6 +18,10 @@
 
   `sbt`命令可以提供更多的信息，内存地址在文件中的地址，不用手动计算直接在ida中查找即可。更强大的是可以恢复OC函数的符号，很清晰就能看到当前的调用栈情况。
 
-### More
 
-更多的方便lldb的命令还在开发中...
+
+### Credits
+
+- [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/)
+- [https://lldb.llvm.org/tutorial.html](https://lldb.llvm.org/tutorial.html)
+

@@ -16,7 +16,24 @@ lldb作为苹果iOS和macOS的调试器在正向开发中十分强大，不过�
 
 这里面还有的搜索算法以及异常处理还需要优化，以及对于block这类函数还不能恢复，不过对于大多数的场景目前还是可用。具体效果可以如下：
 
-![https://git.xiaojukeji.com/zhangshun/xia0LLDB/blob/master/resource/b_bt.jpg](https://git.xiaojukeji.com/zhangshun/xia0LLDB/blob/master/resource/b_bt.jpg)
+![https://github.com/4ch12dy/xia0LLDB/blob/master/resource/b_bt.jpg?raw=true](https://github.com/4ch12dy/xia0LLDB/blob/master/resource/b_bt.jpg?raw=true)
 
-![https://git.xiaojukeji.com/zhangshun/xia0LLDB/raw/master/resource/b_sbt.jpg](https://git.xiaojukeji.com/zhangshun/xia0LLDB/raw/master/resource/b_sbt.jpg)
+![https://github.com/4ch12dy/xia0LLDB/blob/master/resource/b_sbt.jpg?raw=true](https://github.com/4ch12dy/xia0LLDB/blob/master/resource/b_sbt.jpg?raw=true)
 
+
+
+### update
+
+现已支持恢复block结构符号解析，通过提供的ida脚本，得到一个json格式的block符号文件，然后在lldb命令行中输入`sbt -f block-json-file-path`即可加载该文件。效果如下：
+
+#### 原始的bt命令结果
+
+![orig_bt](./orig_bt.png)
+
+#### sbt命令（没有加载block符号文件）
+
+![sbt-noblockfile](./sbt-noblockfile.png)
+
+#### sbt命令（带有block符号文件）
+
+![sbt-blockfile](./sbt-blockfile.png)

@@ -23,10 +23,11 @@
 import lldb
 import os
 import shlex
-import ds
 import optparse
 import json
 
+
+BLOCK_JSON_FILE = None
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -34,6 +35,8 @@ def __lldb_init_module(debugger, internal_dict):
     print('"sbt" command installed -> sbt')
     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
+    global BLOCK_JSON_FILE
+
     '''
     Symbolicate backtrace. Will symbolicate a stripped backtrace
     from an executable if the backtrace is using Objective-C 
@@ -41,29 +44,45 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     '''
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
+
     try:
         (options, args) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
+    
+    if options.verbose:
+        BLOCK_JSON_FILE = None
+    
+    result.AppendMessage('  -----------------------------------------------------------------------------------------\n  + author       xia0z')
 
+    if options.file:
+        BLOCK_JSON_FILE = str(options.file)
+        result.AppendMessage('  + blockFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+    else:
+        if BLOCK_JSON_FILE:
+            result.AppendMessage('  + blockFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+        else:
+            result.AppendMessage('  + blockFile    {}'.format(attrStr('NULL, Not Set The Block File', 'redd')))
+    
+    result.AppendMessage('  -----------------------------------------------------------------------------------------')
+    
     target = exe_ctx.target
     thread = exe_ctx.thread
 
-    if options.address:
-        address = [int(options.address, 16)]
-        firstFrameAddr = address[0]
-    else:
-        frameAddresses = [f.addr.GetLoadAddress(target) for f in thread.frames]
-        firstFrameAddr = frameAddresses[0]
+    # if options.address:
+    #     address = [int(options.address, 16)]
+    #     firstFrameAddr = address[0]
+    # else:
+    #     frameAddresses = [f.addr.GetLoadAddress(target) for f in thread.frames]
+    #     firstFrameAddr = frameAddresses[0]
 
-
-    frameString = SymbolishStackTraceFrame(debugger,target,thread)
+    frameString = symbolishStackTraceFrame(debugger,target,thread)
     # return 2 screen
     result.AppendMessage(str(frameString))
     return 
 
-def SymbolishStackTraceFrame(debugger,target, thread):
+def symbolishStackTraceFrame(debugger,target, thread):
     frame_string = ''
     idx = 0
 
@@ -84,18 +103,23 @@ def SymbolishStackTraceFrame(debugger,target, thread):
                      metholdName = 'main + ' + str(symbol_offset)
                 else:
                     command_script = findSymbolFromAddressScript(load_addr)
-                    response = exeScript(debugger,command_script)
+                    one = exeScript(debugger,command_script)
+                    # is set the block file path
+                    if BLOCK_JSON_FILE and len(BLOCK_JSON_FILE) > 0:
+                        two = findBlockSymbolFromAdress(file_addr)
+                        response = chooseBest(one, two)
+                    else:
+                        response = one
                     metholdName = str(response).replace("\n","")
                 frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol}\n'.format(num=idx, f_addr=attrStr(str(hex(file_addr)), 'cyan'), m_addr=attrStr(hex(load_addr),'grey'),mod=attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=attrStr(metholdName, 'green'))
             else:
                 metholdName = f.addr.symbol.name
                 frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol} + {offset} \n'.format(num=idx, f_addr=attrStr(str(hex(file_addr)), 'cyan'), m_addr=attrStr(hex(load_addr),'grey'),mod=attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=metholdName, offset=symbol_offset)
         else:
-            frame_string += '  frame #{num}: {addr} {mod}`{func} at {file} {args} \n'.format(
+            frame_string += '  frame #{num}: {addr} {mod}`{func} at {file}\n'.format(
                 num=idx, addr=hex(load_addr), mod=attrStr(str(f.addr.module.file.basename), 'yellow'),
                 func='%s [inlined]' % function if f.IsInlined() else function,
-                file=f.addr.symbol.name,
-                args=get_args_as_string(f, showFuncName=False) if not f.IsInlined() else '()')
+                file=f.addr.symbol.name)
         
         idx = idx + 1
     return frame_string
@@ -123,6 +147,58 @@ def attrStr(msg, color='black'):
     }[color]
     return clr + msg + ('\x1b\x5b39m' if clr == 'yellow' else '\033[0m')
 
+def chooseBest(scriptRet, jsonFileRet):
+    maxDis = 4000
+    one = scriptRet.replace(" ", "")
+    two = jsonFileRet.replace(" ", "")
+
+    try:
+        # skip first methold type char "-/+" and turn distance to int
+        oneDis = int(one[1:].split('+')[1], 10)
+        twoDis = int(two[1:].split('+')[1], 10)
+
+    except Exception,e:
+        return '===[E]===:' + scriptRet
+
+    if oneDis <= twoDis:
+        if oneDis >= maxDis:
+            return 'Maybe a C function. scriptDis:{} Try Symbol:{}'.format(oneDis, scriptRet)
+        else:
+            return scriptRet
+
+    if twoDis < oneDis:
+        if twoDis >= maxDis:
+            return 'Maybe a C function. jsonFileDis:{} Try Symbol:{}'.format(twoDis, jsonFileRet)
+        else:
+            return jsonFileRet
+
+    return jsonFileRet
+
+def findBlockSymbolFromAdress(address):
+    try:
+        f = open(BLOCK_JSON_FILE, 'r')
+        symbolJsonArr = json.loads(f.read())
+        f.close()
+    except Exception,e:
+        return "ERROR in handle json file, check file path and content is correct:{}. + 0".format(BLOCK_JSON_FILE)
+
+    if type(address) is int:
+        pass
+    else:
+        address = int(address, 16)
+
+    theDis = 0xffffffffffffffff
+    theSymbol = ''
+    for block in symbolJsonArr:
+        blockAddr = int(block['address'], 16)
+        # curDis = address - blockAddr
+        if blockAddr <= address and (address - blockAddr) <= theDis:
+            theDis = address - blockAddr
+            theSymbol = block['name']
+    
+    result = theSymbol + ' + ' + str(theDis)
+    return result
+
 def isMainModuleFromAddress(target,debugger,address):
     #  get moduleName of address
     addr = target.ResolveLoadAddress(address)
@@ -149,8 +225,9 @@ def exeScript(debugger,command_script):
     interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
 
     if not res.HasResult():
-        result.SetError('There\'s no result ' + res.GetError())
-        return
+        # something error
+        return res.GetError()
+        
     response = res.GetOutput()
     return response
 
@@ -171,6 +248,7 @@ def findSymbolFromAddressScript(frame_addr):
 
     uintptr_t tmpDis = 0;
     uintptr_t theDistance = 0xffffffffffffffff;
+    uintptr_t theIMP = 0;
     NSString* theMethodName = nil;
     NSString* theClassName = nil;
     NSString* theMetholdType = nil;
@@ -191,9 +269,10 @@ def findSymbolFromAddressScript(frame_addr):
             NSString* m_name = NSStringFromSelector((SEL)method_getName(meth));
             // [tmpdict setObject:m_name forKey:(id)[@((uintptr_t)implementation) stringValue]];
 
-            if(frame_addr <= (uintptr_t)implementation){
-                if(((uintptr_t)implementation - frame_addr) <= theDistance){
-                    theDistance = (uintptr_t)implementation - frame_addr;
+            if(frame_addr >= (uintptr_t)implementation){
+                if((frame_addr - (uintptr_t)implementation) <= theDistance){
+                    theDistance = frame_addr - (uintptr_t)implementation);
+                    theIMP = (uintptr_t)implementation;
                     theMethodName = m_name;
                     theClassName = (NSString*)NSStringFromClass(cls);
                     theMetholdType = @"-";
@@ -210,9 +289,10 @@ def findSymbolFromAddressScript(frame_addr):
             NSString* cm_name = NSStringFromSelector((SEL)method_getName(meth));
             // [tmpdict setObject:cm_name forKey:(id)[@((uintptr_t)implementation) stringValue]];
 
-            if(frame_addr <= (uintptr_t)implementation){
-                if(((uintptr_t)implementation - frame_addr) <= theDistance){
-                    theDistance = (uintptr_t)implementation - frame_addr;
+            if(frame_addr >= (uintptr_t)implementation){
+                if((frame_addr - (uintptr_t)implementation) <= theDistance){
+                    theDistance = frame_addr - (uintptr_t)implementation);
+                    theIMP = (uintptr_t)implementation;
                     theMethodName = cm_name;
                     theClassName = (NSString*)NSStringFromClass(cls);
                     theMetholdType = @"+";
@@ -232,6 +312,8 @@ def findSymbolFromAddressScript(frame_addr):
     [retStr appendString:@" "];
     [retStr appendString:theMethodName];
     [retStr appendString:@"]"];
+    // [retStr appendString:@" -> "];
+    // [retStr appendString:(id)[@((uintptr_t)theIMP) stringValue]];
     [retStr appendString:@" + "];
     [retStr appendString:(id)[@((uintptr_t)theDistance) stringValue]];
 
@@ -247,14 +329,25 @@ def generateOptions():
     return expr_options
 
 def generate_option_parser():
-    usage = "usage: %prog [options] path/to/item"
+    usage = "usage: sbt -f block-json-file-path"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
 
-    parser.add_option("-a", "--address",
+    # parser.add_option("-a", "--address",
+    #                   action="store",
+    #                   default=None,
+    #                   dest="address",
+    #                   help="Only try to resymbolicate this address")
+
+    parser.add_option("-f", "--file",
                       action="store",
                       default=None,
-                      dest="address",
-                      help="Only try to resymbolicate this address")
+                      dest="file",
+                      help="special the block json file")
 
-    
+    parser.add_option("-r", "--reset",
+                      action="store_true",
+                      default=None,
+                      dest='verbose',
+                      help="reset block file to None")
+
     return parser
