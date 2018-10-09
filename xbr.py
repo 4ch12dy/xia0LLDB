@@ -62,7 +62,7 @@ def is_class_method(arg):
 		return True
 	else:
 		return False
-
+	
 def get_selected_frame():
 	debugger = lldb.debugger
 	target = debugger.GetSelectedTarget()
