@@ -34,7 +34,7 @@
 
 **sbt**
 
-```bash
+```
 Usage: sbt -f block-json-file-path
 
 Options:
