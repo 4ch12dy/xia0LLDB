@@ -18,13 +18,15 @@ import xutil
 
 BLOCK_JSON_FILE = None
 
+IS_NO_COLOR_OUTPUT = False
+
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
 	'command script add -f sbt.handle_command sbt -h "Resymbolicate stripped ObjC backtrace"')
 	print('"sbt" command installed -> sbt')
 					
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
-	global BLOCK_JSON_FILE
+	global BLOCK_JSON_FILE, IS_NO_COLOR_OUTPUT
 	
 	'''
 	Symbolicate backtrace. Will symbolicate a stripped backtrace
@@ -40,8 +42,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 		result.SetError(parser.usage)
 		return
 		
+	if options.nocolor:
+		result.AppendMessage("set no color")
+		IS_NO_COLOR_OUTPUT = True
+
 	if options.verbose:
 		BLOCK_JSON_FILE = None
+
 		
 	result.AppendMessage('  ==========================================xia0LLDB===========================================')
 	if options.file:
@@ -115,7 +122,12 @@ def symbolishStackTraceFrame(debugger,target, thread):
 		idx = idx + 1
 	return frame_string
 
-def attrStr(msg, color='black'):      
+def attrStr(msg, color='black'):   
+	global IS_NO_COLOR_OUTPUT
+
+	if IS_NO_COLOR_OUTPUT:
+	   	return msg
+	
 	clr = {
 	'cyan' : '\033[36m',
 	'grey' : '\033[2m',
@@ -346,6 +358,12 @@ def generate_option_parser():
 					default=None,
 					dest="file",
 					help="special the block json file")
+
+	parser.add_option("-x", "--XcodeNoColor",
+					action="store_true",
+					default=None,
+					dest='nocolor',
+					help="disable color output for Xcode")
 
 	parser.add_option("-r", "--reset",
 					action="store_true",

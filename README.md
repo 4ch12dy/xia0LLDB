@@ -28,7 +28,28 @@
 
   `sbt`命令可以提供更多的信息，内存地址在文件中的地址，不用手动计算直接在ida中查找即可。更强大的是可以恢复OC函数的符号，很清晰就能看到当前的调用栈情况。
 
+### Update
 
+由于Xcode的终端不支持颜色输出，所以sbt命令增加了-x选项，设置以后会禁用颜色输出。
+
+**sbt**
+
+```bash
+Usage: sbt -f block-json-file-path
+
+Options:
+  -h, --help            show this help message and exit
+  -f FILE, --file=FILE  special the block json file
+  -x, --XcodeNoColor    disable color output for Xcode
+  -r, --reset           reset block file to None
+```
+
+
+
+### Document
+
+- [关于项目的分析]([http://4ch12dy.site/2018/10/03/LLDB%E8%B0%83%E8%AF%95%E5%99%A8%E6%A0%88%E7%AC%A6%E5%8F%B7%E5%8C%96/%E5%BC%BA%E5%8C%96%E4%BD%A0%E7%9A%84lldb%E8%B0%83%E8%AF%95%E5%99%A8/](http://4ch12dy.site/2018/10/03/LLDB调试器栈符号化/强化你的lldb调试器/))
+- [此项目的Frida移植版本](http://4ch12dy.site/2019/07/02/xia0CallStackSymbols/xia0CallStackSymbols/)
 
 ### Credits
 
