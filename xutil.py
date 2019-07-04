@@ -1,4 +1,13 @@
-#!/usr/bin/python
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
+ #        _        ___  _      _      _____  ____   
+ #       (_)      / _ \| |    | |    |  __ \|  _ \  
+ #  __  ___  __ _| | | | |    | |    | |  | | |_) | 
+ #  \ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
+ #   >  <| | (_| | |_| | |____| |____| |__| | |_) | 
+ #  /_/\_\_|\__,_|\___/|______|______|_____/|____/                                                                                                                   
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|
 
 import lldb
 import os
@@ -28,6 +37,11 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     
     if options.address:
         setBreakpointAtMainImage(debugger, str(options.address))
+        return
+
+    if options.ivars:
+        ret = printIvarsOfObject(debugger, str(options.ivars))
+        result.AppendMessage(str(ret))
         return
 
     if options.module:
@@ -94,6 +108,24 @@ def setBreakpointAtMainImage(debugger, address):
     slide = exeScript(debugger, command_script)
     debugger.HandleCommand('br set -a "%s+%s"' % (slide, str(address)))
 
+def printIvarsOfObject(debugger, address):
+    command_script = 'id xobject = (id)' + address + ';' 
+    command_script += r'''
+    NSMutableString* retStr = [NSMutableString string];
+    const char* name;
+    unsigned int count;
+    struct objc_property **properties = (struct objc_property**)class_copyPropertyList((Class)object_getClass(xobject), &count);
+    for(int i=0;i<count;i++){
+        [retStr appendString:@"one"];
+        name = (const char*)property_getName(properties[i]);
+    }
+    // retStr = [(NSObject*)xobject performSelector:(SEL)NSSelectorFromString(@"_ivarDescription")];
+    //retStr = objc_msgsend(xobject, (SEL)NSSelectorFromString(@"_ivarDescription"));
+    name
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
+
 def mload(debugger, modulePath):
     command_script = 'const char* module = "' + modulePath + '";' 
     command_script += r'''
@@ -156,10 +188,10 @@ def generate_option_parser():
                     dest="module",
                     help="special the block json file")
 
-    parser.add_option("-r", "--reset",
-                    action="store_true",
+    parser.add_option("-i", "--ivars",
+                    action="store",
                     default=None,
-                    dest='verbose',
-                    help="reset block file to None")
+                    dest="ivars",
+                    help="po address object ivars")
 
     return parser

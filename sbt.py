@@ -1,10 +1,20 @@
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|	
+ #        _        ___  _      _      _____  ____   
+ #       (_)      / _ \| |    | |    |  __ \|  _ \  
+ #  __  ___  __ _| | | | |    | |    | |  | | |_) | 
+ #  \ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
+ #   >  <| | (_| | |_| | |____| |____| |__| | |_) | 
+ #  /_/\_\_|\__,_|\___/|______|______|_____/|____/                                                                                                                   
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|
+
 import lldb
 import os
 import shlex
 import optparse
 import json
 import xutil
-
 
 BLOCK_JSON_FILE = None
 
@@ -33,19 +43,19 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	if options.verbose:
 		BLOCK_JSON_FILE = None
 		
-	result.AppendMessage(' -----------------------------------------------------------------------------------------\n  + author       xia0z')
-
+	result.AppendMessage('  ==========================================xia0LLDB===========================================')
 	if options.file:
 		BLOCK_JSON_FILE = str(options.file)
-		result.AppendMessage('  + blockFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+		result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
 	else:
 		if BLOCK_JSON_FILE:
-			result.AppendMessage('  + blockFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+			result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+			pass
 		else:
-			result.AppendMessage('  + blockFile    {}'.format(attrStr('NULL, Not Set The Block File', 'redd')))
-	
-	result.AppendMessage('  -----------------------------------------------------------------------------------------')
-	
+			result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr('Not Set The Block Symbol Json File, Try \'sbt -f\'', 'redd')))
+			pass
+	result.AppendMessage('  =============================================================================================')
+
 	target = exe_ctx.target
 	thread = exe_ctx.thread
 
