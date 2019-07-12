@@ -6,7 +6,7 @@
 
 ### Commands
 
-- `pcc` 这个命令仅仅是 `process connect connect `的一个alias，后面输入目标ip和port连接到目标设备。例如：`pcc ://127.0.0.1:1234`
+- `pcc` 这个命令仅仅是 `process connect connect://127.0.0.1:1234 `的一个alias，后面输入目标ip和port连接到目标设备。例如：`pcc `
 
 - `xbr`可以直接对OC函数下断点，即使macho符号表被strip。例如：`xbr "-[yourClass yourMethod]"`
 
