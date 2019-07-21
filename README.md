@@ -106,7 +106,7 @@ lldb's choose command version of cycript's choose command, test on iPhone6P in i
 
 
 
-**说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug**
+说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug，关于苹果关于堆的设计以及管理见访问：[http://4ch12dy.site/2019/04/01/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/](http://4ch12dy.site/2019/04/01/深入理解macos-heap/深入理解macos-heap/)
 
 ### Screenshot
 
