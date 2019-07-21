@@ -83,7 +83,7 @@ Options:
 
 #### choose
 
-lldb choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
+lldb's choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
 
 从cycript移植到lldb的choose命令，在iOS10 iPhone6p测试通过。 **enjoy~**
 
@@ -103,6 +103,8 @@ lldb choose command version of cycript's choose command, test on iPhone6P in iOS
 ```
 
 **Tips: It seems different of heap layout by malloc in iOS12, So choose cmd maybe has some bugs  **
+
+
 
 **说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug**
 
