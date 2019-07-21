@@ -6,7 +6,9 @@
 
 `command script import git-xia0LLDB-path/xlldb.py` in lldb or `.lldbinit`
 
+you can run `install.sh` auto add command script import git-xia0LLDB-path/xlldb.py to your `.lldbinit`
 
+Happy debugging~~
 
 ### Commands
 
