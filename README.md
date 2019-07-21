@@ -104,7 +104,9 @@ lldb's choose command version of cycript's choose command, test on iPhone6P in i
 
 Tips: It seems different of heap layout by malloc in iOS12, So choose cmd maybe has some bugs 
 
-说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug，关于苹果关于堆的设计以及管理见访问：[http://4ch12dy.site/2019/04/01/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/](http://4ch12dy.site/2019/04/01/深入理解macos-heap/深入理解macos-heap/)
+说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug，后面有时间在适配一下，关于苹果关于堆的设计以及管理见访问：[http://4ch12dy.site/2019/04/01/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/](http://4ch12dy.site/2019/04/01/深入理解macos-heap/深入理解macos-heap/)
+
+其他设备或者系统如果有问题的话，欢迎issue 或pr
 
 ### Screenshot
 
@@ -129,11 +131,11 @@ Tips: It seems different of heap layout by malloc in iOS12, So choose cmd maybe 
 
 ### Credits
 
-- [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/)
+- [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/) thanks to the ida_block_json.py script
 
 - https://github.com/DerekSelander/LLDB Special thanks to DerekSelander's LLDB provide the code framework
 
-- [https://lldb.llvm.org/tutorial.html](https://lldb.llvm.org/tutorial.html)
+- [https://lldb.llvm.org/tutorial.html](https://lldb.llvm.org/tutorial.html) 
 
 - https://github.com/hankbao/Cycript/blob/bb99d698a27487af679f8c04c334d4ea840aea7a/ObjectiveC/Library.mm choose command in cycript
 
