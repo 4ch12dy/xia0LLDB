@@ -2,33 +2,27 @@
 
 ### Install 
 
-`git clone `项目以后，在`lldb`命令行中输入`command script import git-xia0LLDB-path/xlldb.py `即可导入安装
+`git clone xia0LLDB_git_project `
+
+`command script import git-xia0LLDB-path/xlldb.py` in lldb or `.lldbinit`
+
+
 
 ### Commands
 
-- `pcc` 这个命令仅仅是 `process connect connect://127.0.0.1:1234 `的一个alias，后面输入目标ip和port连接到目标设备。例如：`pcc `
+- `pcc`  is alias of  `process connect connect://127.0.0.1:1234 `
+- `xbr   `  set breakpoint at OC class method although strip symbol like:`xbr "-[yourClass yourMethod]"`
+- `sbt` the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
 
-- `xbr`可以直接对OC函数下断点，即使macho符号表被strip。例如：`xbr "-[yourClass yourMethod]"`
+- `ivars`  print all ivars of OC object (iOS Only)
+- `methods`print all methods of OC object (iOS Only)
+- `choose` get instance object of given class name, a lldb version of cycript's choose command
 
-- `sbt`代替系统的`bt`命令，专门为了strip后的栈符号恢复。仅仅输入`sbt`即可。`sbt`还可以恢复block函数符号，通过提供的ida python脚本得到的json文件，然后输入`sbt -f block_json_file_path` 即可解析block符号。如下效果：
 
-  #### 原始bt结果
 
-  ![orig_bt](./resource/orig_bt.png)
+### Update for sbt -x 2019/07/04
 
-  #### sbt （不带block符号文件）
-
-  ![sbt-noblockfile](./resource/sbt-noblockfile.png)
-
-  #### sbt （带有block符号文件）
-
-  ![sbt-blockfile](./resource/sbt-blockfile.png)
-
-  
-
-  `sbt`命令可以提供更多的信息，内存地址在文件中的地址，不用手动计算直接在ida中查找即可。更强大的是可以恢复OC函数的符号，很清晰就能看到当前的调用栈情况。
-
-### Update
+disable color output for Xcode terminal not support color output.
 
 由于Xcode的终端不支持颜色输出，所以sbt命令增加了-x选项，设置以后会禁用颜色输出。
 
@@ -46,6 +40,49 @@ Options:
 
 
 
+### Update for choose 2019/07/21
+
+#### choose
+
+lldb choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
+
+从cycript移植到lldb的choose命令，在iOS10 iPhone6p测试通过。 **enjoy~**
+
+```
+(lldb) choose
+[usage] choose className
+
+(lldb) choose AppDelegate
+<__NSArrayM 0x170054370>(
+<AppDelegate: 0x17403e840>
+)
+
+(lldb) choose ViewController
+<__NSArrayM 0x174054a90>(
+<ViewController: 0x109e10550>
+)
+```
+
+**Tips: It seems different of heap layout by malloc in iOS12, So choose cmd maybe has some bugs  **
+
+**说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug**
+
+### Screenshot
+
+**bt**
+
+![orig_bt](./resource/orig_bt.png)
+
+**sbt**
+
+![sbt-noblockfile](./resource/sbt-noblockfile.png)
+
+**sbt -f block_json_file**
+
+![sbt-blockfile](./resource/sbt-blockfile.png)
+
+
+
 ### Document
 
 - [关于项目的分析](http://4ch12dy.site/2018/10/03/xia0LLDB/xia0LLDB/)
@@ -54,5 +91,14 @@ Options:
 ### Credits
 
 - [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/)
+
 - [https://lldb.llvm.org/tutorial.html](https://lldb.llvm.org/tutorial.html)
+
+- https://github.com/hankbao/Cycript/blob/bb99d698a27487af679f8c04c334d4ea840aea7a/ObjectiveC/Library.mm choose command in cycript
+
+- https://opensource.apple.com/source/lldb/lldb-179.1/examples/darwin/heap_find/heap.py.auto.html
+
+  Apple lldb opensource about heap
+
+- [https://blog.0xbbc.com/2015/07/%e6%8a%bd%e7%a6%bbcycript%e7%9a%84choose%e5%8a%9f%e8%83%bd/](https://blog.0xbbc.com/2015/07/抽离cycript的choose功能/) 抽离Cycript的choose功能
 

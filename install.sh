@@ -4,7 +4,7 @@ xlldb_file="xlldb.py"
 xlldb_file_path=$shell_root_dir"/"$xlldb_file
 lldbinit=$HOME"/.lldbinit"
 
-sed -i "-bk" '/.*xlldb\.py/d' $lldbinit
+sed -i "" '/.*xlldb\.py/d' $lldbinit
 
 if [[ -f $lldbinit ]]; then
 	echo "lldbinit file exist, add xlldb.py to $lldbinit"
