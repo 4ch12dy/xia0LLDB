@@ -13,6 +13,7 @@
 - `pcc`  is alias of  `process connect connect://127.0.0.1:1234 `
 - `xbr   `  set breakpoint at OC class method although strip symbol like:`xbr "-[yourClass yourMethod]"`
 - `sbt` the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
+- `xutil` this command has some useful tools, like:`xutil -s moduleName` print the silde of given module
 
 - `ivars`  print all ivars of OC object (iOS Only)
 - `methods`print all methods of OC object (iOS Only)
@@ -38,7 +39,45 @@ Options:
   -r, --reset           reset block file to None
 ```
 
+**xutil**
 
+```
+(lldb) xutil -h
+Usage: xutil [options] args
+
+Options:
+  -h, --help            show this help message and exit
+  -b MAINMODULEADDRESS, --breakpointAtMainModule=MAINMODULEADDRESS
+                        set a breakpoint at main module of given address
+  -s SILDEMODULE, --slide=SILDEMODULE
+                        get slide of given module
+  -l LOADMODULE, --load=LOADMODULE
+                        load a macho file
+```
+
+- `xutil -b mainModuleAddress`: auto add adress and silde of main module
+
+  ```
+  (lldb) xutil -b 0x0000000100009b60
+  Breakpoint 2: where = choose`-[ViewController onClick:] at ViewController.m:53, address = 0x000000010001db60
+  ```
+
+- `xutil -s moduleName`: get silde of given module name
+
+  ```
+  (lldb) xutil -s choose
+  Module:/var/containers/Bundle/Application/2E718F3A-CCBF-4251-9BB6-BBF57267CABB/choose.app/choose
+  Silde:0x14000
+  ```
+
+- `xutil -l machoFilePath`: load the macho file like dylib in the process
+
+  ```
+  (lldb) xutil -l /Library/MobileSubstrate/DynamicLibraries/test.dylib
+  Success
+  ```
+
+  
 
 ### Update for choose 2019/07/21
 
