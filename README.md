@@ -57,7 +57,7 @@ Options:
                         load a macho file
 ```
 
-- `xutil -b mainModuleAddress`: auto add adress and silde of main module
+- `xutil -b mainModuleAddress`: auto set breakpoint of address on main image (auto add the main image slide)
 
   ```
   (lldb) xutil -b 0x0000000100009b60

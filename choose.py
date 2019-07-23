@@ -185,8 +185,8 @@ def choose(debugger, classname):
 	}
 	
 	XZChoice choice;
-	choice.query_ = [NSMutableArray array];
-	choice.result_ = [NSMutableArray array];
+	choice.query_ = (NSMutableArray*)[NSMutableArray array];
+	choice.result_ = (NSMutableArray*)[NSMutableArray array];
 	
 	Class _class = NSClassFromString(className);
 	size_t number;
