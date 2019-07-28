@@ -38,6 +38,12 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 #    if options.help:
 #        result.AppendMessage("[usage] xutil [options] args")
 #        return
+    if not args:
+        ret = "[usage] xutil test"
+    elif str(args[0]) in "test":
+        ret = hook(debugger)
+        result.AppendMessage(str(ret))
+        return
     
     if options.mainModuleAddress:
         setBreakpointAtMainImage(debugger, str(options.mainModuleAddress))
@@ -158,6 +164,37 @@ def mload(debugger, modulePath):
     void *handle = (void *)dlopen(module, 2); 
     id retVal = handle ? @"Success" : @"fail"; 
     retVal
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
+    
+def hook(debugger):
+    command_script = ''
+    command_script += r'''
+    @import Foundation;
+    @import ObjectiveC;
+    
+    NSString* hookLog = @"";
+        
+    
+    Class clz = (Class)objc_getClass("ViewController");
+    SEL originalSelector = NSSelectorFromString(@"onClick:");
+    SEL hookSelector = NSSelectorFromString(@"imageFromColor:");
+    SEL swizzledSelector = NSSelectorFromString([NSString stringWithFormat:@"_xia0_swizzle_%x_%@", arc4random(), NSStringFromSelector(originalSelector)]);
+        
+    Method originalMethod = class_getInstanceMethod(clz, originalSelector);
+    Method hookMethod = class_getInstanceMethod(clz, hookSelector);
+    if (!originalMethod) {
+        hookLog = @"NULL originalMethod";
+    }
+    
+   method_setImplementation(originalMethod, method_getImplementation(hookMethod));
+    //class_addMethod(class, swizzledSelector, xblock, method_getTypeEncoding(originalMethod));
+    //Method newMethod = class_getInstanceMethod(clz, swizzledSelector);
+    //method_exchangeImplementations(originalMethod, newMethod);
+    hookLog = @"Success";
+    
+    hookLog
     '''
     retStr = exeScript(debugger, command_script)
     return retStr

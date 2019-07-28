@@ -21,7 +21,13 @@ Happy debugging~~
 - `methods`print all methods of OC object (iOS Only)
 - `choose` get instance object of given class name, a lldb version of cycript's choose command
 
+### TODO
 
+- Anti-anti-debug：反反调试，即绕过应用的反调试机制
+- OCHOOK：在lldb中能够进行OC方法的HOOK等操作
+- NetworkLog：监控lldb中能够监控网络数据
+- UI Debug：一些UI相关的实用命令
+- ...
 
 ### Update for sbt -x 2019/07/04
 
