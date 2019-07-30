@@ -27,6 +27,7 @@ Happy debugging~~
 - OCHOOK：在lldb中能够进行OC方法的HOOK等操作
 - NetworkLog：监控lldb中能够监控网络数据
 - UI Debug：一些UI相关的实用命令
+- xbr:xbr命令增加一个功能，`xbr className`就能够自动对该类的所有方法下断点/或者hook增加日志。获取其方法调用顺序
 - ...
 
 ### Update for sbt -x 2019/07/04
