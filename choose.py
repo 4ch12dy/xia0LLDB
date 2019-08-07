@@ -176,9 +176,10 @@ def choose(debugger, classname):
 					#endif
 					
 					needed = (size_t)class_getInstanceSize((Class)result));
-					if (!(needed <= boundary && (needed + 15) / 16 * 16 != size) || (needed > boundary && (needed + 511) / 512 * 512 != size)){
-						[choiz->result_ addObject:(id)data];
+					if ((needed <= boundary && (needed + 15) / 16 * 16 != size) || (needed > boundary && (needed + 511) / 512 * 512 != size)){
+						continue;
 					}
+					[choiz->result_ addObject:(id)data];
 				}
 			}
 		}
@@ -213,11 +214,60 @@ def choose(debugger, classname):
 			continue;
 		zone->introspect->enumerator((task_t)mach_task_self(), &choice, MALLOC_PTR_IN_USE_RANGE_TYPE, zones[i], task_peek, choose_);
 	}
-	
-	choice.result_
+
+	NSArray* choosed = choice.result_;
+	NSMutableString* retStr = [NSMutableString string];
+	int choosedSize = [choosed count];
+	if(choosedSize == 0){
+
+		[retStr appendString:@"Not found any object of class: "];
+		[retStr appendString:className];
+
+	}else{
+        uint64_t objAdrr = (uint64_t)choosed;
+		[retStr appendString:@"====>xia0LLDB NSArray Address(base 10): "];
+		[retStr appendString:[@(objAdrr) stringValue]];
+		[retStr appendString:@"\tsize: "];
+		[retStr appendString:[@(choosedSize) stringValue]];
+		[retStr appendString:@"\n"];
+		[retStr appendString:@"|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\n"];
+		[retStr appendString:@"V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V\n"];
+
+		for (unsigned i = 0; i != [choosed count]; ++i) {
+
+			if([(NSObject*)([choosed objectAtIndex:i]) isKindOfClass:[NSString class]]){
+				[retStr appendString: @"Now not support print the NSString, You can po it by yourself like below:"];
+				[retStr appendString:@"\n1. p/x "];
+				[retStr appendString:[@(objAdrr) stringValue]];
+				[retStr appendString:@"\n2. po (NSArray*)above_hex_address_vaule : print the NSArray contain NSString"];
+				[retStr appendString:@"\n3. po [(NSArray*)above_hex_address_vaule objectAtIndex:0] : print first NSString"];
+				break;
+			
+			}else{
+
+				uint64_t objAdrr = (uint64_t)[choosed objectAtIndex:i];
+				[retStr appendString:@"======>xia0LLDB Object Address(base 10): "];
+	            [retStr appendString:[@(objAdrr) stringValue]];
+				[retStr appendString:@"\n"];
+				[retStr appendString:[(NSObject*)([choosed objectAtIndex:i]) description]];
+			}
+			
+			[retStr appendString:@"\n"];
+		}
+
+	}
+
+	retStr
 	'''
 	retStr = exeScript(debugger, command_script)
 	return retStr
+
+
+def parray(debugger, command, result, dict):
+    args = shlex.split(command)
+    va = lldb.frame.FindVariable(args[0])
+    for i in range(0, int(args[1])):
+        print va.GetChildAtIndex(i, 0, 1)
 	
 def attrStr(msg, color='black'):      
 	clr = {

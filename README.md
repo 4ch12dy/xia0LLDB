@@ -123,7 +123,13 @@ lldb's choose command version of cycript's choose command, test on iPhone6P in i
 
 ~~说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug，后面有时间在适配一下。~~
 
-其他设备或者系统如果有问题的话，欢迎issue 或pr
+是我自己代码写得有问题导致得….其他设备或者系统如果有问题的话，欢迎issue 或pr
+
+#### Fix critical bugs in choose 2019/08/07
+
+fix need check and something error when choose NSString
+
+
 
 ### Screenshot
 

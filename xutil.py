@@ -128,10 +128,10 @@ def getBaseAddressFromModule(debugger, moduleName):
         NSString* curModuleName = @(curModuleName_cstr);
         if([curModuleName containsString:moduleName]) {
             char hex[20];
-            sprintf(hex, "%lx", slide)
+            sprintf(hex, "%p", slide);
             [retStr appendString:@"Module:"];
             [retStr appendString:@(curModuleName_cstr)];
-            [retStr appendString:@"\nSilde:0x"];
+            [retStr appendString:@"\nSilde:"];
             [retStr appendString:@(hex)];
         }
     }
