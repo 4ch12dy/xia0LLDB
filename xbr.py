@@ -29,7 +29,6 @@ def create_command_arguments(command):
 	return shlex.split(command)
 	
 def is_command_valid(args):
-	""
 	if len(args) == 0:
 		return False
 
@@ -41,6 +40,20 @@ def is_command_valid(args):
 	if not ret:
 		return False
 
+	return True
+
+def is_br_all_cmd(args):
+	if len(args) == 0:
+		return False
+
+	arg = args[0]
+	if len(arg) == 0:
+		return False
+
+	ret = re.match('^[a-zA-z]*$', arg)
+
+	if not ret:
+		return False
 	return True
 
 def get_class_name(arg):
@@ -107,8 +120,73 @@ def get_instance_method_address(class_name, method_name):
 	
 	return method_addr.GetValueAsUnsigned()
 
+def exeScript(debugger,command_script):
+	res = lldb.SBCommandReturnObject()
+	interpreter = debugger.GetCommandInterpreter()
+	interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
+
+	if not res.HasResult():
+		# something error
+		return res.GetError()
+			
+	response = res.GetOutput()
+	return response
+
+def getAllMethodAddressOfClass(debugger, classname):
+
+	command_script = 'const char* className = "' + classname + '";' 
+
+	command_script += r'''
+	//NSMutableArray *mAddrArr = [NSMutableArray array];
+	NSMutableString* retStr = [NSMutableString string];
+
+	unsigned int m_size = 0;
+	Class cls = objc_getClass(className);
+	struct objc_method ** metholds = (struct objc_method **)class_copyMethodList(cls, &m_size);
+	
+
+	for (int j = 0; j < m_size; j++) {
+		struct objc_method * meth = metholds[j];
+		id implementation = (id)method_getImplementation(meth);
+		NSString* m_name = NSStringFromSelector((SEL)method_getName(meth));
+		
+		//[mAddrArr addObject:(id)[@((uintptr_t)implementation) stringValue]];
+		[retStr appendString:(id)[@((uintptr_t)implementation) stringValue]];
+		[retStr appendString:@"-"];
+	}
+
+	unsigned int cm_size = 0;
+	struct objc_method **classMethods = (struct objc_method **)class_copyMethodList((Class)objc_getMetaClass((const char *)class_getName(cls)), &cm_size);
+	for (int k = 0; k < cm_size; k++) {
+		struct objc_method * meth = classMethods[k];
+		id implementation = (id)method_getImplementation(meth);
+		NSString* cm_name = NSStringFromSelector((SEL)method_getName(meth));
+		//[mAddrArr addObject:(id)[@((uintptr_t)implementation) stringValue]];
+		[retStr appendString:(id)[@((uintptr_t)implementation) stringValue]];
+		[retStr appendString:@"-"];
+	}
+	retStr
+	'''
+	retStr = exeScript(debugger, command_script)
+	return retStr
+
+
 def xbr(debugger, command, result, dict):
 	args = create_command_arguments(command)
+
+	if is_br_all_cmd(args):
+		classname = args[0]
+		ret = getAllMethodAddressOfClass(debugger, classname)
+
+		addrArr = ret.split('-')[:-1]
+
+		for addr in addrArr:
+			address = int(addr)
+			if address:
+				lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
+		
+		result.AppendMessage("Set %ld breakpoints of %s" % (len(addrArr),classname))
+		return
 
 	if not is_command_valid(args):
 		print 'please specify the param, for example: "-[UIView initWithFrame:]"'

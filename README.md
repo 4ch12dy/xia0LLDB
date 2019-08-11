@@ -27,10 +27,19 @@ Happy debugging~~
 - OCHOOK：在lldb中能够进行OC方法的HOOK等操作
 - NetworkLog：监控lldb中能够监控网络数据
 - UI Debug：一些UI相关的实用命令
-- xbr:xbr命令增加一个功能，`xbr className`就能够自动对该类的所有方法下断点/或者hook增加日志。获取其方法调用顺序
+- xbr增加对类所有方法下断点（已完成！2019/08/11）
 - ...
 
-### Update for sbt -x 2019/07/04
+### Update
+
+- Update for sbt -x / xutil 2019/07/04 :  xutil cmd and sbt -x to disable color output in Xcode
+- Update for choose 2019/07/21: lldb's choose command version of cycript's choose command
+- Fix critical bugs in choose 2019/08/07 : Fix critical bugs
+- Update for xbr 2019/08/11: `xbr className` can set breakpoint at adresses of all methods of class
+
+
+
+#### Update for sbt -x 2019/07/04
 
 disable color output for Xcode terminal not support color output.
 
@@ -88,9 +97,9 @@ Options:
 
   
 
-### Update for choose 2019/07/21
+#### Update for choose 2019/07/21
 
-#### choose
+##### choose
 
 lldb's choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
 
@@ -125,9 +134,35 @@ lldb's choose command version of cycript's choose command, test on iPhone6P in i
 
 是我自己代码写得有问题导致得….其他设备或者系统如果有问题的话，欢迎issue 或pr
 
+
+
 #### Fix critical bugs in choose 2019/08/07
 
 fix need check and something error when choose NSString
+
+
+
+#### Update for xbr 2019/08/11
+
+`xbr className` can set breakpoint at adresses of all methods of given class name.
+
+xbr命令增加一个功能，`xbr className`就能够自动对该类的所有方法下断点，获取其方法调用顺序。
+
+```
+(lldb) xbr UPLivePlayerVC
+Breakpoint 1: where = TestPaly`-[UPLivePlayerVC progressSliderSeekTime:] at UPLivePlayerVC.m:205, address = 0x0000000102dc134c
+Breakpoint 2: where = TestPaly`-[UPLivePlayerVC progressSliderTouchDown:] at UPLivePlayerVC.m:197, address = 0x0000000102dc1184
+Breakpoint 3: where = TestPaly`-[UPLivePlayerVC progressSliderValueChanged:] at UPLivePlayerVC.m:201, address = 0x0000000102dc11ec
+...
+Breakpoint 45: where = TestPaly`-[UPLivePlayerVC setUrl:] at UPLivePlayerVC.h:13, address = 0x0000000102dc2990
+Breakpoint 46: where = TestPaly`-[UPLivePlayerVC play] at UPLivePlayerVC.m:124, address = 0x0000000102dbfd84
+Breakpoint 47: where = TestPaly`-[UPLivePlayerVC pause] at UPLivePlayerVC.m:132, address = 0x0000000102dbfe1c
+Set 47 breakpoints of UPLivePlayerVC
+```
+
+这里可以看出，已经对`UPLivePlayerVC`类的47个方法下了断点。
+
+usage is above. Enjoy~
 
 
 
