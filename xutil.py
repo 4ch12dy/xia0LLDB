@@ -21,7 +21,7 @@ BLOCK_JSON_FILE = None
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f xutil.handle_command xutil -h "[usage] xutil [options] args"')
-    print('"xutil" command installed -> xutil')
+    print('"xutil" installed -> xutil [-b addr, -s module, -l dylib]')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)

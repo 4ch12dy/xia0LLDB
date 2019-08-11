@@ -1,15 +1,18 @@
-#!/usr/bin/python
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|	
+ #        _        ___  _      _      _____  ____   
+ #       (_)      / _ \| |    | |    |  __ \|  _ \  
+ #  __  ___  __ _| | | | |    | |    | |  | | |_) | 
+ #  \ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
+ #   >  <| | (_| | |_| | |____| |____| |__| | |_) | 
+ #  /_/\_\_|\__,_|\___/|______|______|_____/|____/                                                                                                                   
+ #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
+ # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|
 
 '''
-Author: 
-	xia0z & Proteas
-Date:
-	2018-09-18
-Purpose:
-	set breakpoint without symbols, for examle: stripped macho
-Usage:
-	add the following line to ~/.lldbinit
-	command script import ~/.lldb/bt_objc.py
+
+specail thanks to xia0z & Proteas
+
 '''
 
 import lldb
@@ -19,8 +22,8 @@ import optparse
 import re
 
 def __lldb_init_module (debugger, dict):
-	debugger.HandleCommand('command script add -f xbr.bt_objc xbr -h "set breakpoint on ObjC Method"')
-	print('"xbr" command installed --> xbr -[UIView initWithFrame:]')
+	debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
+	print('"xbr" installed --> xbr "-[UIView initWithFrame:]"')
 
 def create_command_arguments(command):
 	return shlex.split(command)
@@ -104,7 +107,7 @@ def get_instance_method_address(class_name, method_name):
 	
 	return method_addr.GetValueAsUnsigned()
 
-def bt_objc(debugger, command, result, dict):
+def xbr(debugger, command, result, dict):
 	args = create_command_arguments(command)
 
 	if not is_command_valid(args):

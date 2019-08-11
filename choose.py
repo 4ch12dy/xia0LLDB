@@ -18,7 +18,7 @@ import json
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
 	'command script add -f choose.handle_command choose -h "cycript choose on lldb"')
-	print('"choose" command installed -> choose')
+	print('"choose" installed -> choose className')
 					
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	command_args = shlex.split(command, posix=False)

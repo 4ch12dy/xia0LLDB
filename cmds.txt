@@ -6,6 +6,7 @@ command regex ivars -h "Dumps all ivars for an instance of a particular class wh
 
 command regex methods -h "Dumps all methods implemented by the NSObject subclass (iOS, NSObject subclass only)" -s "methods UIView" -- 's/(.+)/expression -lobjc -O -- [%1 _shortMethodDescription]/'
 
+command regex pclass 's/(([0-9]|\$|\@|\[).*)/cpo [%1 class]/'
 
 settings set target.x86-disassembly-flavor intel
 
