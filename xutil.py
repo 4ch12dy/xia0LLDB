@@ -44,6 +44,11 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         ret = hook(debugger)
         result.AppendMessage(str(ret))
         return
+
+    if options.kAntiDebug:
+        killAntiDebug(debugger)
+        result.AppendMessage(str('kill antiDebug: ptrace'))
+        return
     
     if options.mainModuleAddress:
         setBreakpointAtMainImage(debugger, str(options.mainModuleAddress))
@@ -167,6 +172,9 @@ def mload(debugger, modulePath):
     '''
     retStr = exeScript(debugger, command_script)
     return retStr
+
+def killAntiDebug(debugger):
+    lldb.debugger.HandleCommand ('re write $x0 0')
     
 def hook(debugger):
     command_script = ''
@@ -256,7 +264,13 @@ def generate_option_parser():
                     default=None,
                     dest="loadModule",
                     help="load a macho file")
-                    
+
+    parser.add_option("-k", "--killAntiDebug",
+                action="store_true",
+                default=None,
+                dest='kAntiDebug',
+                help="bypass anti debug")
+                
 #    parser.add_option("-h", "--help",
 #                    action="store_true",
 #                    default=None,
