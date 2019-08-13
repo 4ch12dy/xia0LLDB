@@ -212,36 +212,6 @@ def debugme(debugger):
     retStr = exeScript(debugger, command_script)
     return retStr
 
-
-def parray(debugger, command, result, dict):
-    args = shlex.split(command)
-    va = lldb.frame.FindVariable(args[0])
-    for i in range(0, int(args[1])):
-        print va.GetChildAtIndex(i, 0, 1)
-	
-def attrStr(msg, color='black'):      
-	clr = {
-	'cyan' : '\033[36m',
-	'grey' : '\033[2m',
-	'blink' : '\033[5m',
-	'redd' : '\033[41m',
-	'greend' : '\033[42m',
-	'yellowd' : '\033[43m',
-	'pinkd' : '\033[45m',
-	'cyand' : '\033[46m',
-	'greyd' : '\033[100m',
-	'blued' : '\033[44m',
-	'whiteb' : '\033[7m',
-	'pink' : '\033[95m',
-	'blue' : '\033[94m',
-	'green' : '\033[92m',
-	'yellow' : '\x1b\x5b33m',
-	'red' : '\033[91m',
-	'bold' : '\033[1m',
-	'underline' : '\033[4m'
-	}[color]
-	return clr + msg + ('\x1b\x5b39m' if clr == 'yellow' else '\033[0m')
-
 def exeScript(debugger,command_script):
 	res = lldb.SBCommandReturnObject()
 	interpreter = debugger.GetCommandInterpreter()
@@ -262,13 +232,13 @@ def generateOptions():
 	return expr_options
 
 def generate_option_parser():
-	usage = "usage: choose className"
+	usage = "debugme"
 	parser = optparse.OptionParser(usage=usage, prog="lookup")
 
-	parser.add_option("-c", "--childClass",
+	parser.add_option("-a", "--address",
 					action="store_true",
 					default=None,
-					dest='print childClass',
-					help="print childClass")
+					dest='patchAddress',
+					help="kill anti-debug in lldb")
 						
 	return parser
