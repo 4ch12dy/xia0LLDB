@@ -186,6 +186,8 @@ Kill antiDebug by xia0:
 [+] all done! happy debug~
 ```
 
+相关分析见：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
+
 
 
 ### Screenshot
