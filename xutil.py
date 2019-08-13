@@ -14,6 +14,7 @@ import os
 import shlex
 import optparse
 import json
+import re
 
 
 BLOCK_JSON_FILE = None
@@ -135,18 +136,16 @@ def getBaseAddressFromModule(debugger, moduleName):
         long slide = (long)_dyld_get_image_vmaddr_slide(i);
         NSString* curModuleName = @(curModuleName_cstr);
         if([curModuleName containsString:moduleName]) {
-            char hex[20];
-            sprintf(hex, "%p", slide);
-            [retStr appendString:@"Module:"];
+            [retStr appendString:@"Module Path : "];
             [retStr appendString:@(curModuleName_cstr)];
-            [retStr appendString:@"\nSilde:"];
-            [retStr appendString:@(hex)];
+            [retStr appendString:@"\nModule Silde: "];
+            [retStr appendString:(id)[@(slide) stringValue]];
         }
     }
     retStr
     '''
     retStr = exeScript(debugger, command_script)
-    return retStr
+    return hexIntInStr(retStr)
 
 def printIvarsOfObject(debugger, address):
     command_script = 'id xobject = (id)' + address + ';' 
@@ -251,7 +250,19 @@ def showAllUserDefaults(debugger):
     retStr
     '''
     return exeScript(debugger, command_script)
-    
+
+  
+def hexIntInStr(needHexStr):
+
+    def handler(reobj):
+        intvalueStr = reobj.group(0)
+        
+        r = hex(int(intvalueStr))
+        return r
+
+    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
+
+    return re.sub(pattern, handler, needHexStr, flags = 0)  
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()

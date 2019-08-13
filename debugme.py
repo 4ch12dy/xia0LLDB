@@ -14,6 +14,7 @@ import os
 import shlex
 import optparse
 import json
+import re
 
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
@@ -115,7 +116,7 @@ def debugme(debugger):
     uintptr_t target_ptr = (uintptr_t)dlsym(handle, "ptrace");
     unsigned long page_start = (unsigned long) (target_ptr) & ~(0x1000-0x1);
     unsigned long patch_offset = (unsigned long)target_ptr - page_start;
-    [retStr appendString:@"\n[*] target address: "];
+    [retStr appendString:@"\n[*] ptrace target address: "];
     [retStr appendString:(id)[@((uintptr_t)target_ptr) stringValue]]
     [retStr appendString:@" and offset: "];
     [retStr appendString:(id)[@((uintptr_t)patch_offset) stringValue]]
@@ -133,14 +134,14 @@ def debugme(debugger):
 
     [retStr appendString:@"[*] mmap new page: "];
     [retStr appendString:(id)[@((uintptr_t)new_page) stringValue]]
-    [retStr appendString:@" success! \n"];
+    [retStr appendString:@" success. \n"];
 
     kret = (kern_return_t)vm_copy(self_task, (unsigned long)page_start, 0x1000, (vm_address_t) new_page);
     if (kret != KERN_SUCCESS){
         [retStr appendString:@"[-] vm_copy faild!\n"];
         return;
     }
-    [retStr appendString:@"[+] vm_copy success!\n"];
+    [retStr appendString:@"[+] vm_copy target to new page.\n"];
 
     // start patch
     uint8_t patch_ret_ins_data[4] = {0xc0, 0x03, 0x5f, 0xd6}; // ret
@@ -153,7 +154,7 @@ def debugme(debugger):
     */
     // use memcpy to replace mach_vm_write
     memcpy((void *)((unsigned long)new_page+patch_offset), patch_ret_ins_data, 4);
-    [retStr appendString:@"[+] mach_vm_write success!\n"];
+    [retStr appendString:@"[+] patch ret[0xc0 0x03 0x5f 0xd6] with memcpy\n"];
     
     // set back to r-x
     (int)mprotect(new_page, 0x1000, PROT_READ | PROT_EXEC);
@@ -178,11 +179,9 @@ def debugme(debugger):
         return;
     }
 
-    [retStr appendString:@"[*] vm_region_recurse_64 success!\n"];
-
     prot = vm_info.protection & (PROT_READ | PROT_WRITE | PROT_EXEC);
     inherit = vm_info.inheritance;
-    [retStr appendString:@"[*] get page info success!\n"];
+    [retStr appendString:@"[*] get page info done.\n"];
     
     vm_prot_t c;
     vm_prot_t m;
@@ -196,7 +195,7 @@ def debugme(debugger):
         [retStr appendString:@"[-] remap mach_vm_remap faild!\n"];
         return;
     }
-    [retStr appendString:@"[+] remap success!\n"];
+    [retStr appendString:@"[+] remap to target success!\n"];
 
     // clear cache
     void* clear_start_ = (void*)(page_start + patch_offset);
@@ -210,7 +209,19 @@ def debugme(debugger):
     '''
 
     retStr = exeScript(debugger, command_script)
-    return retStr
+    return hexIntInStr(retStr)
+
+def hexIntInStr(needHexStr):
+
+    def handler(reobj):
+        intvalueStr = reobj.group(0)
+        
+        r = hex(int(intvalueStr))
+        return r
+
+    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
+
+    return re.sub(pattern, handler, needHexStr, flags = 0)
 
 def exeScript(debugger,command_script):
 	res = lldb.SBCommandReturnObject()
