@@ -23,7 +23,7 @@ Happy debugging~~
 
 ### TODO
 
-- Anti-anti-debug：反反调试，即绕过应用的反调试机制
+- Anti-anti-debug：反反调试，即绕过应用的反调试机制 （已完成70% 2019/08/13）
 - OCHOOK：在lldb中能够进行OC方法的HOOK等操作
 - NetworkLog：监控lldb中能够监控网络数据
 - UI Debug：一些UI相关的实用命令
@@ -32,10 +32,11 @@ Happy debugging~~
 
 ### Update
 
-- Update for sbt -x / xutil 2019/07/04 :  xutil cmd and sbt -x to disable color output in Xcode
-- Update for choose 2019/07/21: lldb's choose command version of cycript's choose command
-- Fix critical bugs in choose 2019/08/07 : Fix critical bugs
-- Update for xbr 2019/08/11: `xbr className` can set breakpoint at adresses of all methods of class
+- [2019/07/04] Update for **sbt -x / xutil**  :  xutil cmd and sbt -x to disable color output in Xcode
+- [2019/07/21] Update for  **choose**  : lldb's choose command version of cycript's choose command
+- [2019/08/07] Fix critical bugs in **choose**  : Fix critical bugs
+- [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
+- [2019/08/13] New **debugme** commad: kill anti debug in lldb
 
 
 
@@ -163,6 +164,27 @@ Set 47 breakpoints of UPLivePlayerVC
 这里可以看出，已经对`UPLivePlayerVC`类的47个方法下了断点。
 
 usage is above. Enjoy~
+
+#### New debugme 2019/08/13
+
+Base single instruction patch to anti-anti-debug in lldb 
+
+基于内存patch的单指令patch反反调试
+
+```
+(lldb) debugme
+Kill antiDebug by xia0:
+[*] target address: 6501024128 and offset: 384
+[*] mmap new page: 4572217344 success! 
+[+] vm_copy success!
+[+] mach_vm_write success!
+[*] set new page back to r-x success!
+[*] vm_region_recurse_64 success!
+[*] get page info success!
+[+] remap success!
+[*] clear cache success!
+[+] all done! happy debug~
+```
 
 
 
