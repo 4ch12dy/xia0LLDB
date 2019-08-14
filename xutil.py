@@ -17,7 +17,6 @@ import json
 import re
 
 
-BLOCK_JSON_FILE = None
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -134,12 +133,15 @@ def getBaseAddressFromModule(debugger, moduleName):
     for(uint32_t i = 0; i < count; i++){
         char* curModuleName_cstr = (char*)_dyld_get_image_name(i);
         long slide = (long)_dyld_get_image_vmaddr_slide(i);
+        uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
         NSString* curModuleName = @(curModuleName_cstr);
         if([curModuleName containsString:moduleName]) {
             [retStr appendString:@"Module Path : "];
             [retStr appendString:@(curModuleName_cstr)];
             [retStr appendString:@"\nModule Silde: "];
             [retStr appendString:(id)[@(slide) stringValue]];
+            [retStr appendString:@"\nModule base : "];
+            [retStr appendString:(id)[@(baseAddr) stringValue]];
         }
     }
     retStr
