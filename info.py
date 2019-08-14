@@ -43,6 +43,11 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         ret = getAddressInfoByAddress(debugger, str(options.address))
         result.AppendMessage(str(ret))
         return
+
+    if options.UserDefaults:
+        ret = getUserDefaultsInfoByKey(debugger, str(options.UserDefaults))
+        result.AppendMessage(str(ret))
+    return
             
     result.AppendMessage(str('usage: info [-m moduleName, -a address, -u UserDefaults]'))
     return 
@@ -112,19 +117,15 @@ def getAddressInfoByAddress(debugger, address):
     return hexIntInStr(retStr)
     
     
-def getUserDefaultsInfoByKey(debugger):
+def getUserDefaultsInfoByKey(debugger, key):
     command_script = r'''
     NSArray *keys = [[[NSUserDefaults standardUserDefaults] dictionaryRepresentation] allKeys];
     NSArray *values = [[[NSUserDefaults standardUserDefaults] dictionaryRepresentation] allValues];
-    NSMutableString* retStr = [NSMutableString string];
     
-    for(int i = 0; i < 1; i++){
-       [retStr appendString:keys[i]];
-       [retStr appendString:@"------->"];
-       [retStr appendString:values[i]];
-       [retStr appendString:@"\n"];
-    }
-    retStr
+    
+    NSMutableDictionary *retDic = [NSMutableDictionary dictionaryWithObjects:values forKeys:keys]
+
+    retDic
     '''
     return exeScript(debugger, command_script)
 
@@ -200,7 +201,7 @@ def generate_option_parser():
                         help="get address info by address")
 
     parser.add_option("-u", "--UserDefaults",
-                    action="store",
+                    action="store_true",
                     default=None,
                     dest="UserDefaults",
                     help="show UserDefaults info")
