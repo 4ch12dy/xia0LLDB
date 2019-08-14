@@ -14,6 +14,7 @@ import os
 import shlex
 import optparse
 import json
+import re
 
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
@@ -225,13 +226,13 @@ def choose(debugger, classname):
 
 	}else{
         uint64_t objAdrr = (uint64_t)choosed;
-		[retStr appendString:@"====>xia0LLDB NSArray Address(base 10): "];
+		[retStr appendString:@"====>xia0LLDB NSArray Address: "];
 		[retStr appendString:[@(objAdrr) stringValue]];
 		[retStr appendString:@"\tsize: "];
 		[retStr appendString:[@(choosedSize) stringValue]];
 		[retStr appendString:@"\n"];
-		[retStr appendString:@"|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |\n"];
-		[retStr appendString:@"V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V\n"];
+		[retStr appendString:@"|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | \n"];
+		[retStr appendString:@"V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V \n"];
 
 		for (unsigned i = 0; i != [choosed count]; ++i) {
 
@@ -246,7 +247,7 @@ def choose(debugger, classname):
 			}else{
 
 				uint64_t objAdrr = (uint64_t)[choosed objectAtIndex:i];
-				[retStr appendString:@"======>xia0LLDB Object Address(base 10): "];
+				[retStr appendString:@"======>xia0LLDB Object Address: "];
 	            [retStr appendString:[@(objAdrr) stringValue]];
 				[retStr appendString:@"\n"];
 				[retStr appendString:[(NSObject*)([choosed objectAtIndex:i]) description]];
@@ -260,7 +261,7 @@ def choose(debugger, classname):
 	retStr
 	'''
 	retStr = exeScript(debugger, command_script)
-	return retStr
+	return attrStr(hexIntInStr(retStr), 'green')
 
 
 def parray(debugger, command, result, dict):
@@ -268,6 +269,18 @@ def parray(debugger, command, result, dict):
     va = lldb.frame.FindVariable(args[0])
     for i in range(0, int(args[1])):
         print va.GetChildAtIndex(i, 0, 1)
+
+def hexIntInStr(needHexStr):
+
+    def handler(reobj):
+        intvalueStr = reobj.group(0)
+        
+        r = hex(int(intvalueStr))
+        return r
+
+    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
+
+    return re.sub(pattern, handler, needHexStr, flags = 0)
 	
 def attrStr(msg, color='black'):      
 	clr = {
