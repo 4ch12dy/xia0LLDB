@@ -107,13 +107,38 @@ def debugme(debugger):
 
     #define VM_FLAGS_OVERWRITE 0x4000  /* delete any existing mappings first */
 
+    typedef __darwin_pid_t        pid_t; 
+
     // init value
     kern_return_t kret;
     task_t self_task = (task_t)mach_task_self();
 
+    /* Set platform binary flag */
+    #define FLAG_PLATFORMIZE (1 << 1)
+
+    // platformize_me 
+    // https://github.com/pwn20wndstuff/Undecimus/issues/112
+    
+    void* handle = (void*)dlopen("/usr/lib/libjailbreak.dylib", RTLD_LAZY);
+    if (!handle){
+        [retStr appendString:@"[-] /usr/lib/libjailbreak.dylib dlopen failed!\n"];
+        return;
+    }
+    
+    // Reset errors
+    (const char *)dlerror();
+    typedef void (*fix_entitle_prt_t)(pid_t pid, uint32_t what);
+    fix_entitle_prt_t ptr = (fix_entitle_prt_t)dlsym(handle, "jb_oneshot_entitle_now");
+    
+    const char *dlsym_error = (const char *)dlerror();
+    if (dlsym_error) return;
+    
+    ptr((pid_t)getpid(), FLAG_PLATFORMIZE);
+    [retStr appendString:@"\n[+] platformize me success!"];
+
     // get target address and page
-    void *handle = (void*)dlopen(0, RTLD_GLOBAL | RTLD_NOW);
-    uintptr_t target_ptr = (uintptr_t)dlsym(handle, "ptrace");
+    handle = (void*)dlopen(0, RTLD_GLOBAL | RTLD_NOW);
+    uintptr_t target_ptr = (uintptr_t)dlsym(handle, "testPatch");
     unsigned long page_start = (unsigned long) (target_ptr) & ~(0x1000-0x1);
     unsigned long patch_offset = (unsigned long)target_ptr - page_start;
     [retStr appendString:@"\n[*] ptrace target address: "];
@@ -160,6 +185,7 @@ def debugme(debugger):
     (int)mprotect(new_page, 0x1000, PROT_READ | PROT_EXEC);
     [retStr appendString:@"[*] set new page back to r-x success!\n"];
 
+    
     // remap
     vm_prot_t prot;
     vm_inherit_t inherit;
@@ -205,6 +231,7 @@ def debugme(debugger):
     [retStr appendString:@"[*] clear cache success!\n"];
     
     [retStr appendString:@"[+] all done! happy debug~"];
+
     retStr
     '''
 

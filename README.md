@@ -15,8 +15,8 @@ Happy debugging~~
 - `pcc`  is alias of  `process connect connect://127.0.0.1:1234 `
 - `xbr   `  set breakpoint at OC class method although strip symbol like:`xbr "-[yourClass yourMethod]"`
 - `sbt` the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
-- `xutil` this command has some useful tools, like:`xutil -s moduleName` print the silde of given module
-
+- `xutil` this command has some useful tools(maybe fixable)
+- `info` very useful command to get info of address/function/module and so on
 - `ivars`  print all ivars of OC object (iOS Only)
 - `methods`print all methods of OC object (iOS Only)
 - `choose` get instance object of given class name, a lldb version of cycript's choose command
@@ -36,7 +36,8 @@ Happy debugging~~
 - [2019/07/21] Update for  **choose**  : lldb's choose command version of cycript's choose command
 - [2019/08/07] Fix critical bugs in **choose**  : Fix critical bugs
 - [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
-- [2019/08/13] New **debugme** commad: kill anti debug in lldb
+- [2019/08/13] New **debugme**: kill anti debug in lldb
+- [2019/08/20] New **info**:  get info of address/function/module and so on
 
 
 
@@ -187,6 +188,14 @@ Kill antiDebug by xia0:
 ```
 
 相关分析见：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
+
+#### New info 2019/08/20
+
+get info of address/function/module and so on
+
+```
+usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
+```
 
 
 

@@ -20,7 +20,7 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f info.handle_command info -h "[usage] info [-a,-m]"')
-    print('"info" installed -> info [-m moduleName, -a address, -u UserDefaults]')
+    print('"info" installed -> info [-m moduleName, -a address, -f funtionName, -u UserDefaults]')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
@@ -44,10 +44,15 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         result.AppendMessage(str(ret))
         return
 
+    if options.function:
+        ret = getFuncInfoByName(debugger, str(options.function))
+        result.AppendMessage(str(ret))
+        return
+
     if options.UserDefaults:
         ret = getUserDefaultsInfoByKey(debugger, str(options.UserDefaults))
         result.AppendMessage(str(ret))
-    return
+        return
             
     result.AppendMessage(str('usage: info [-m moduleName, -a address, -u UserDefaults]'))
     return 
@@ -115,6 +120,63 @@ def getAddressInfoByAddress(debugger, address):
     '''
     retStr = exeScript(debugger, command_script)
     return hexIntInStr(retStr)
+
+def getFuncInfoByName(debugger, funcName):
+    command_script = 'const char * func_name = "' + funcName + '";'
+    command_script += r'''
+    NSMutableString* retStr = [NSMutableString string];
+
+    #define RTLD_LAZY   0x1
+    #define RTLD_NOW    0x2
+    #define RTLD_LOCAL  0x4
+    #define RTLD_GLOBAL 0x8
+
+    typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+    } Dl_info;
+
+    Dl_info dl_info;
+
+    void* handle = (void*)dlopen(0, RTLD_GLOBAL | RTLD_NOW);
+    void* target_ptr = (void*)dlsym(handle, func_name);
+
+    if(target_ptr){
+        uintptr_t target_addr = (uintptr_t)target_ptr;
+        
+        dladdr(target_ptr, &dl_info);
+        
+        char* module_path = (char*)dl_info.dli_fname;
+        uintptr_t module_base = (uintptr_t)dl_info.dli_fbase;
+        char* symbol_name = (char*)dl_info.dli_sname;
+        uintptr_t symbol_addr = (uintptr_t)dl_info.dli_saddr;
+        
+
+        [retStr appendString:@"Func   name: "];
+        [retStr appendString:@((char*)func_name)];
+        [retStr appendString:@"\nFunc   addr: "];
+        [retStr appendString:(id)[@(target_addr) stringValue]];
+        
+        [retStr appendString:@"\nModule Path: "];
+        [retStr appendString:@(module_path)];
+        [retStr appendString:@"\nModule base: "];
+        [retStr appendString:(id)[@(module_base) stringValue]];
+        [retStr appendString:@"\nSymbol name: "];
+        [retStr appendString:@(symbol_name)];
+        [retStr appendString:@"\nSymbol addr: "];
+        [retStr appendString:(id)[@(symbol_addr) stringValue]];
+    
+    }else{
+        [retStr appendString:@"[-] dlsym not found symbol:"];
+        [retStr appendString:@((char*)func_name)];
+    }
+    retStr
+    '''
+    retStr = exeScript(debugger, command_script)
+    return hexIntInStr(retStr)
+
     
     
 def getUserDefaultsInfoByKey(debugger, key):
@@ -185,7 +247,7 @@ def generateOptions():
     return expr_options
 
 def generate_option_parser():
-    usage = "usage: info [-m moduleName, -a address, -u UserDefaults]"
+    usage = "usage: info info [-m moduleName, -a address, -f funtionName, -u UserDefaults]'"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
 
     parser.add_option("-m", "--moduleName",
@@ -199,6 +261,12 @@ def generate_option_parser():
                         default=None,
                         dest="address",
                         help="get address info by address")
+
+    parser.add_option("-f", "--function",
+                    action="store",
+                    default=None,
+                    dest="function",
+                    help="get function info by name")
 
     parser.add_option("-u", "--UserDefaults",
                     action="store_true",
