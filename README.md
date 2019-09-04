@@ -189,6 +189,12 @@ Kill antiDebug by xia0:
 
 相关分析见：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
 
+##### fix iOS11/12 vm_remap bug 2019/09/04
+
+This bug is about wrong memory page size. I use the 4K on 32bit device instead of 16K on 64bit device.
+
+Fxxk it!!! confuse me long time!
+
 #### New info 2019/08/20
 
 get info of address/function/module and so on

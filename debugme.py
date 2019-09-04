@@ -42,6 +42,10 @@ def debugme(debugger):
     command_script = '' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
+   
+    #define PAGE_SIZE        0x0000000000004000
+
+    #define PAGE_MASK        0x0000000000003fff
     
     #define RTLD_LAZY   0x1
     #define RTLD_NOW    0x2
@@ -107,6 +111,10 @@ def debugme(debugger):
 
     #define VM_FLAGS_OVERWRITE 0x4000  /* delete any existing mappings first */
 
+    typedef int                     __int32_t;
+
+    typedef __int32_t       __darwin_pid_t;   
+
     typedef __darwin_pid_t        pid_t; 
 
     // init value
@@ -118,7 +126,8 @@ def debugme(debugger):
 
     // platformize_me 
     // https://github.com/pwn20wndstuff/Undecimus/issues/112
-    
+    /*
+
     void* handle = (void*)dlopen("/usr/lib/libjailbreak.dylib", RTLD_LAZY);
     if (!handle){
         [retStr appendString:@"[-] /usr/lib/libjailbreak.dylib dlopen failed!\n"];
@@ -136,10 +145,12 @@ def debugme(debugger):
     ptr((pid_t)getpid(), FLAG_PLATFORMIZE);
     [retStr appendString:@"\n[+] platformize me success!"];
 
+    */
+
     // get target address and page
-    handle = (void*)dlopen(0, RTLD_GLOBAL | RTLD_NOW);
-    uintptr_t target_ptr = (uintptr_t)dlsym(handle, "testPatch");
-    unsigned long page_start = (unsigned long) (target_ptr) & ~(0x1000-0x1);
+    void* handle = (void*)dlopen(0, RTLD_GLOBAL | RTLD_NOW);
+    uintptr_t target_ptr = (uintptr_t)dlsym(handle, "ptrace");
+    unsigned long page_start = (unsigned long) (target_ptr) & ~PAGE_MASK;
     unsigned long patch_offset = (unsigned long)target_ptr - page_start;
     [retStr appendString:@"\n[*] ptrace target address: "];
     [retStr appendString:(id)[@((uintptr_t)target_ptr) stringValue]]
@@ -150,7 +161,7 @@ def debugme(debugger):
 
     // map new page for patch
     
-    void *new_page = (void *)mmap(NULL, 0x1000, 0x1 | 0x2, 0x1000 | 0x0001, -1, 0);
+    void *new_page = (void *)mmap(NULL, PAGE_SIZE, 0x1 | 0x2, 0x1000 | 0x0001, -1, 0);
     if (!new_page ){
         [retStr appendString:@"[-] mmap failed!\n"];
         return;
@@ -161,7 +172,7 @@ def debugme(debugger):
     [retStr appendString:(id)[@((uintptr_t)new_page) stringValue]]
     [retStr appendString:@" success. \n"];
 
-    kret = (kern_return_t)vm_copy(self_task, (unsigned long)page_start, 0x1000, (vm_address_t) new_page);
+    kret = (kern_return_t)vm_copy(self_task, (unsigned long)page_start, PAGE_SIZE, (vm_address_t) new_page);
     if (kret != KERN_SUCCESS){
         [retStr appendString:@"[-] vm_copy faild!\n"];
         return;
@@ -182,7 +193,7 @@ def debugme(debugger):
     [retStr appendString:@"[+] patch ret[0xc0 0x03 0x5f 0xd6] with memcpy\n"];
     
     // set back to r-x
-    (int)mprotect(new_page, 0x1000, PROT_READ | PROT_EXEC);
+    (int)mprotect(new_page, PAGE_SIZE, PROT_READ | PROT_EXEC);
     [retStr appendString:@"[*] set new page back to r-x success!\n"];
 
     
@@ -213,7 +224,7 @@ def debugme(debugger):
     vm_prot_t m;
     mach_vm_address_t target = (mach_vm_address_t)page_start;
     
-    kret = (kern_return_t)mach_vm_remap(self_task, &target, 0x1000, 0,
+    kret = (kern_return_t)mach_vm_remap(self_task, &target, PAGE_SIZE, 0,
                        VM_FLAGS_OVERWRITE, self_task,
                        (mach_vm_address_t) new_page, true,
                        &c, &m, inherit);
