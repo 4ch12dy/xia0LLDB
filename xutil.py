@@ -16,12 +16,13 @@ import optparse
 import json
 import re
 
-
-
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f xutil.handle_command xutil -h "[usage] xutil [options] args"')
-    print('"xutil" installed -> xutil [-b addr, -s module, -l dylib]')
+    print('========')
+    print('[xutil]: some util tool for debug, this command is flexable and some options maybe remove future')
+    print('\txutil [-b addr, -s module, -l dylib]')
+    print('\tmore usage, try "xutil -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)

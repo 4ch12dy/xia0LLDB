@@ -23,7 +23,11 @@ IS_NO_COLOR_OUTPUT = False
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
 	'command script add -f sbt.handle_command sbt -h "Resymbolicate stripped ObjC backtrace"')
-	print('"sbt" installed  sbt [-f BlockSymbolFile]')
+	print('========')
+	print('[xbr]: Resymbolicate stripped ObjC backtrace')
+	print('\txbr [-f BlockSymbolFile]')
+	print('\tmore usage, try "sbt -h"')
+
 					
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	global BLOCK_JSON_FILE, IS_NO_COLOR_OUTPUT

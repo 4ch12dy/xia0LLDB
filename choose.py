@@ -19,8 +19,11 @@ import re
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
 	'command script add -f choose.handle_command choose -h "cycript choose on lldb"')
-	print('"choose" installed -> choose className')
-					
+	print('========')
+	print('[choose]: cycript choose on lldb')
+	print('\tchoose "className"')
+	print('\tmore usage, try "choose -h"')
+			
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	command_args = shlex.split(command, posix=False)
 	parser = generate_option_parser()

@@ -23,7 +23,10 @@ import re
 
 def __lldb_init_module (debugger, dict):
 	debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
-	print('"xbr" installed --> xbr "-[UIView initWithFrame:]"')
+	print('========')
+	print('[xbr]: set breakpoint on OC function even striped')
+	print('\txbr "-[UIView initWithFrame:]" or "className" for all the class metholds')
+	print('\tmore usage, try "xbr -h"')
 
 def create_command_arguments(command):
 	return shlex.split(command)
