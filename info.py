@@ -59,7 +59,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 
 #   get module info by module name 
 def getModulInfoByName(debugger, moduleName):
-    command_script = 'NSString* moduleName = @"' + moduleName + '";' 
+    command_script = '@import Foundation;NSString* moduleName = @"' + moduleName + '";' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
     
@@ -70,7 +70,7 @@ def getModulInfoByName(debugger, moduleName):
         uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
         NSString* curModuleName = @(curModuleName_cstr);
         if([curModuleName containsString:moduleName]) {
-            [retStr appendString:@"Module Path : "];
+            [retStr appendString:@"\n=======\nModule Path : "];
             [retStr appendString:@(curModuleName_cstr)];
             [retStr appendString:@"\nModule Silde: "];
             [retStr appendString:(id)[@(slide) stringValue]];
