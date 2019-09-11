@@ -23,7 +23,7 @@ Happy debugging~~
 
 ### TODO
 
-- Anti-anti-debug：反反调试，即绕过应用的反调试机制 （已完成70% 2019/08/13）
+- Anti-anti-debug：反反调试，即绕过应用的反调试机制 （已完成 2019/09/11）
 - OCHOOK：在lldb中能够进行OC方法的HOOK等操作
 - NetworkLog：监控lldb中能够监控网络数据
 - UI Debug：一些UI相关的实用命令
@@ -38,6 +38,7 @@ Happy debugging~~
 - [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
 - [2019/08/13] New **debugme**: kill anti debug in lldb
 - [2019/08/20] New **info**:  get info of address/function/module and so on
+- [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
 
 
 
@@ -195,6 +196,25 @@ This bug is about wrong memory page size. I use the 4K on 32bit device instead o
 
 Fxxk it!!! confuse me long time!
 
+##### inline hook svc done 2019/09/11
+
+now debugme can hook ptrace and inlinehook svc to kill anti debug. it is so strong ever!!!
+
+```
+[*] start patch ptrace funtion to bypass antiDebug
+[+] success ptrace funtion to bypass antiDebug
+[*] start patch svc ins to bypass antiDebug
+[+] get text segment start address:0x100017430 and end address:0x10001a398
+[+] found svc address:0x100017528
+[*] start hook svc at address:0x100017528
+[+] success hook svc at address:0x100017528
+[+] found svc address:0x100017540
+[*] start hook svc at address:0x100017540
+[+] success hook svc at address:0x100017540
+[*] all patch done
+[x] happy debugging~ kill antiDebug by xia0@2019
+```
+
 #### New info 2019/08/20
 
 get info of address/function/module and so on
@@ -218,6 +238,10 @@ usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
 **sbt -f block_json_file**
 
 ![sbt-blockfile](./resource/sbt-blockfile.png)
+
+**debugme**
+
+![debugme](./resource/debugme.png)
 
 
 
