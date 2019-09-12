@@ -24,7 +24,7 @@ def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
 	'command script add -f sbt.handle_command sbt -h "Resymbolicate stripped ObjC backtrace"')
 	print('========')
-	print('[xbr]: Resymbolicate stripped ObjC backtrace')
+	print('[sbt]: Resymbolicate stripped ObjC backtrace')
 	print('\txbr [-f BlockSymbolFile]')
 	print('\tmore usage, try "sbt -h"')
 
