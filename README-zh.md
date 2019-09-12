@@ -1,52 +1,54 @@
-## xia0's lldb python script (Progressing)
+## xia0's lldb python script (开发中)
 
-[中文版README](./README-zh.md)
+[English README](./README.md)
 
-### Install 
+### 安装
 
 `git clone xia0LLDB_git_project `
 
-`command script import git-xia0LLDB-path/xlldb.py` in lldb or `.lldbinit`
+在lldb命令行之中直接输入`command script import git-xia0LLDB-path/xlldb.py` 就能导入使用
 
-you can run `install.sh` auto add command script import git-xia0LLDB-path/xlldb.py to your `.lldbinit`
+如果你想以后打开lldb就能自动导入可以运行项目目录下的自动安装脚本
+
+运行 `install.sh` 自动添加 command script import git-xia0LLDB-path/xlldb.py 到 `.lldbinit`文件
 
 Happy debugging~~
 
-### Commands
+### 支持的命令
 
-- `pcc`  is alias of  `process connect connect://127.0.0.1:1234 `
-- `xbr   `  set breakpoint at OC class method although strip symbol like:`xbr "-[yourClass yourMethod]"`
-- `sbt` the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
-- `xutil` this command has some useful tools(maybe fixable)
-- `info` very useful command to get info of address/function/module and so on
-- `ivars`  print all ivars of OC object (iOS Only)
-- `methods`print all methods of OC object (iOS Only)
-- `choose` get instance object of given class name, a lldb version of cycript's choose command
+- `pcc`  仅仅是  `process connect connect://127.0.0.1:1234 `的简写
+- `xbr   `  能够针对符号表strip以后的可执行文件对OC方法下断点，例如`xbr "-[yourClass yourMethod]"`
+- `sbt`  该命令和bt命令类似，但是能够提供很多的信息。包括栈帧的内存地址，文件地址。最重要的是还能恢复strip以后的OC函数符号。如果你还想回复block的符号，可以用提供了ida脚本提取block符号以后。手动指定即可。例如 `sbt -f  block_json_file_path` 
+- `xutil`  一些实用的命令集合，这个命令会不定更改，功能不是很稳定。
+- `info` 非常实用的命令，能够获取地址/函数/模块的信息
+- `ivars` 获取OC对象的所有成员变量信息(仅支持iOS)
+- `methods` 获取对象的所有方法信息(仅支持iOS)
+- `choose`  动态获取一个类在内存中的对象，这是cycript中的choose在lldb的移植版本
 
-### TODO
+### 一些正在做或者想做的功能
 
-- Anti-anti-debug：bypass anti debug in lldb （done at 2019/09/11）
-- OCHOOK：hook ObjectC function in lldb
-- NetworkLog：minitor network info
-- UI Debug：some useful command for UI debug
-- xbr: set breakpoint at address of methods of class（done at 2019/08/11）
+- Anti-anti-debug：反反调试，即绕过应用的反调试机制 （已完成 2019/09/11）
+- OCHOOK：在lldb中能够进行OC方法的HOOK等操作
+- NetworkLog：监控lldb中能够监控网络数据
+- UI Debug：一些UI相关的实用命令
+- xbr增加对类所有方法下断点（已完成！2019/08/11）
 - ...
 
-### Update
+### 重要更新
 
-- [2019/07/04] Update for **sbt -x / xutil**  :  xutil cmd and sbt -x to disable color output in Xcode
-- [2019/07/21] Update for  **choose**  : lldb's choose command version of cycript's choose command
-- [2019/08/07] Fix critical bugs in **choose**  : Fix critical bugs
-- [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
-- [2019/08/13] New **debugme**: kill anti debug in lldb
-- [2019/08/20] New **info**:  get info of address/function/module and so on
-- [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
+- [2019/07/04] 更新了 **sbt -x / xutil**  :  增加了xutil命令以及给sbt命令增加了`-x`选项去禁用xcode颜色输出
+- [2019/07/21] 增加了**choose** : 增加了cycript中choose的lldb版本
+- [2019/08/07] 更新了**choose** : 修复了一个严重的bug
+- [2019/08/11]  更新了**xbr** : 能够通过下面的方式`xbr className` 直接对一个类的所有方法下断点
+- [2019/08/13] 增加 了**debugme**: 一个在lldb中自包含的绕过反调试的命令
+- [2019/08/20] 增加了**info**:  非常实用的命令，能够获取地址/函数/模块的信息
+- [2019/09/11] 更新了**debugme** : 解决了通过26号系统调用内联汇编来反调试的类型
 
 
 
-#### Update for sbt -x 2019/07/04
+#### 更新了 sbt -x 2019/07/04
 
-disable color output for Xcode terminal not support color output.
+由于Xcode的终端不支持颜色输出，所以sbt命令增加了-x选项，设置以后会禁用颜色输出。
 
 **sbt**
 
@@ -76,14 +78,14 @@ Options:
                         load a macho file
 ```
 
-- `xutil -b mainModuleAddress`: auto set breakpoint of address on main image (auto add the main image slide)
+- `xutil -b mainModuleAddress`: 直接对ida中的地址下断点，会自动加上主模块的偏移
 
   ```
   (lldb) xutil -b 0x0000000100009b60
   Breakpoint 2: where = choose`-[ViewController onClick:] at ViewController.m:53, address = 0x000000010001db60
   ```
 
-- `xutil -s moduleName`: get silde of given module name
+- `xutil -s moduleName`:获取给定模块的偏移
 
   ```
   (lldb) xutil -s choose
@@ -91,7 +93,7 @@ Options:
   Silde:0x14000
   ```
 
-- `xutil -l machoFilePath`: load the macho file like dylib in the process
+- `xutil -l machoFilePath`: 记载一个dylib到目标进程
 
   ```
   (lldb) xutil -l /Library/MobileSubstrate/DynamicLibraries/test.dylib
@@ -100,11 +102,11 @@ Options:
 
   
 
-#### Update for choose 2019/07/21
+#### 更新了choose 2019/07/21
 
 ##### choose
 
-lldb's choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
+从cycript移植到lldb的choose命令，在iOS10 iPhone6p测试通过。 **enjoy~**
 
 ```
 (lldb) choose
@@ -137,15 +139,15 @@ lldb's choose command version of cycript's choose command, test on iPhone6P in i
 
 
 
-#### Fix critical bugs in choose 2019/08/07
+#### 修复了choose一个严重bug 2019/08/07
 
-fix need check and something error when choose NSString
+修复了堆内存zone的大小判断以及获取NSString类时候的错误
 
 
 
-#### Update for xbr 2019/08/11
+#### 更新了xbr 2019/08/11
 
-`xbr className` can set breakpoint at adresses of all methods of given class name.
+xbr命令增加一个功能，`xbr className`就能够自动对该类的所有方法下断点，获取其方法调用顺序。
 
 ```
 (lldb) xbr UPLivePlayerVC
@@ -159,11 +161,11 @@ Breakpoint 47: where = TestPaly`-[UPLivePlayerVC pause] at UPLivePlayerVC.m:132,
 Set 47 breakpoints of UPLivePlayerVC
 ```
 
-usage is above. Enjoy~
+这里可以看出，已经对`UPLivePlayerVC`类的47个方法下了断点。
 
-#### New debugme 2019/08/13
+#### 增加了debugme 2019/08/13
 
-Base single instruction patch to anti-anti-debug in lldb 
+基于内存patch的单指令patch反反调试
 
 ```
 (lldb) debugme
@@ -180,17 +182,15 @@ Kill antiDebug by xia0:
 [+] all done! happy debug~
 ```
 
-paper see：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
+相关分析见：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
 
-##### fix iOS11/12 vm_remap bug 2019/09/04
+##### 修复了在iOS11/12 vm_remap的bug 2019/09/04
 
-This bug is about wrong memory page size. I use the 4K on 32bit device instead of 16K on 64bit device.
+这个bug困扰了我好久，修复了有内存页大小错误的bug，我错误的用了32位设备的4K页大小，正确的应该是64位设备的16K页大小
 
-Fxxk it!!! confuse me long time!
+##### 通过hook svc指令绕过反调试完成 2019/09/11
 
-##### inline hook svc done 2019/09/11
-
-now debugme can hook ptrace and inlinehook svc to kill anti debug. it is so strong ever!!!
+现在debug命令能够hook ptrace库函数，以及svc指令来进行反调试的情况。
 
 ```
 [*] start patch ptrace funtion to bypass antiDebug
@@ -207,9 +207,9 @@ now debugme can hook ptrace and inlinehook svc to kill anti debug. it is so stro
 [x] happy debugging~ kill antiDebug by xia0@2019
 ```
 
-#### New info 2019/08/20
+#### 增加了info 2019/08/20
 
-get info of address/function/module and so on
+获取一些关于地址/函数/模块的详细信息
 
 ```
 usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
@@ -217,7 +217,7 @@ usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
 
 
 
-### Screenshot
+### 相关截图
 
 **bt**
 
@@ -237,12 +237,12 @@ usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
 
 
 
-### Document
+### 分析文档
 
-- [About_this_project](http://4ch12dy.site/2018/10/03/xia0LLDB/xia0LLDB/)
-- [sbt command for frida](http://4ch12dy.site/2019/07/02/xia0CallStackSymbols/xia0CallStackSymbols/)
+- [关于项目的分析](http://4ch12dy.site/2018/10/03/xia0LLDB/xia0LLDB/)
+- [此项目的Frida移植版本](http://4ch12dy.site/2019/07/02/xia0CallStackSymbols/xia0CallStackSymbols/)
 
-### Credits
+### 致谢
 
 - [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/) thanks to the ida_block_json.py script
 
@@ -256,5 +256,5 @@ usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
 
   Apple lldb opensource about heap
 
-- [https://blog.0xbbc.com/2015/07/%e6%8a%bd%e7%a6%bbcycript%e7%9a%84choose%e5%8a%9f%e8%83%bd/](https://blog.0xbbc.com/2015/07/抽离cycript的choose功能/) 
+- [https://blog.0xbbc.com/2015/07/%e6%8a%bd%e7%a6%bbcycript%e7%9a%84choose%e5%8a%9f%e8%83%bd/](https://blog.0xbbc.com/2015/07/抽离cycript的choose功能/) 抽离Cycript的choose功能
 
