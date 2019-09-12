@@ -260,6 +260,10 @@ def getTextSegmentAddr(debugger):
 
 	#define MH_MAGIC_64 0xfeedfacf 
 	#define	LC_SEGMENT_64	0x19
+	typedef int                     integer_t;
+	typedef integer_t       cpu_type_t;
+	typedef integer_t       cpu_subtype_t;
+	typedef integer_t       cpu_threadtype_t;
 
 	struct mach_header_64 {
 		uint32_t	magic;		/* mach magic number identifier */
@@ -277,6 +281,7 @@ def getTextSegmentAddr(debugger):
 		uint32_t cmdsize;	/* total size of command in bytes */
 	};
 
+	typedef int             vm_prot_t;
 	struct segment_command_64 { /* for 64-bit architectures */
 		uint32_t	cmd;		/* LC_SEGMENT_64 */
 		uint32_t	cmdsize;	/* includes sizeof section_64 structs */
@@ -656,6 +661,12 @@ def debugme(debugger):
 	# get text segment start/end address 
 	
 	ret = getTextSegmentAddr(debugger)
+	textAddrs = ret.split(',')
+
+	if len(textAddrs) < 2:
+		print("[-] failed to get text segment:" + str(textAddrs))
+		return
+
 	textStart = ret.split(',')[0]
 	textEnd = ret.split(',')[1]
 	textStart = textStart.strip()
