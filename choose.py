@@ -154,7 +154,7 @@ def choose(debugger, classname):
 			//[choiz->result_ addObject:[@(p) stringValue]];
 
 			size_t needed;
-			for(int i=0; i < [choiz->query_ count]; i++){
+			for(unsigned i=0; i < [choiz->query_ count]; i++){
 				struct objc_class * result = (struct objc_class *)[choiz->query_ objectAtIndex:i];
 				uint64_t result_intv = (uint64_t)result;
 				uint64_t isa_intv = (uint64_t)isa;
@@ -221,7 +221,7 @@ def choose(debugger, classname):
 
 	NSArray* choosed = choice.result_;
 	NSMutableString* retStr = [NSMutableString string];
-	int choosedSize = [choosed count];
+	unsigned choosedSize = [choosed count];
 	if(choosedSize == 0){
 
 		[retStr appendString:@"Not found any object of class: "];

@@ -18,11 +18,11 @@ import re
 
 def __lldb_init_module(debugger, internal_dict):
 	debugger.HandleCommand(
-	'command script add -f debugme.handle_command debugme -h "kill anti-debug in lldb"')
+	'command script add -f traceOC.handle_command traceOC -h "trace ObjectC function call"')
 	print('========')
-	print('[debugme]: kill anti-debug in lldb')
-	print('\tdebugme ')
-	print('\tmore usage, try "debugme -h"')
+	print('[traceOC]: trace ObjectC function call')
+	print('\ttraceOC ')
+	print('\tmore usage, try "traceOC -h"')
 					
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	command_args = shlex.split(command, posix=False)
@@ -38,7 +38,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 	
 	result.AppendMessage(str('[x] happy debugging~ kill antiDebug by xia0@2019'))
 
-	ret = debugme(debugger)
+	ret = traceOC(debugger)
 	
 	return
 
@@ -256,7 +256,7 @@ def patchPtrace(debugger):
 def getTextSegmentAddr(debugger):
 	command_script = '@import Foundation;' 
 	command_script += r'''
-	//NSMutableString* retStr = [NSMutableString string];
+	NSMutableString* retStr = [NSMutableString string];
 
 	#define MH_MAGIC_64 0xfeedfacf 
 	#define	LC_SEGMENT_64	0x19
@@ -320,8 +320,6 @@ def getTextSegmentAddr(debugger):
 
 	offset = sizeof(struct mach_header_64);
 	int ncmds = header->ncmds;
-	uint64_t textStart = 0;
-	uint64_t textEnd = 0;
 
 	while(ncmds--) {
 	    /* go through all load command to find __TEXT segment*/
@@ -336,38 +334,24 @@ def getTextSegmentAddr(debugger):
 	        if(!strcmp(curSection->segname, "__TEXT") && !strcmp(curSection->sectname, "__text")){
 	            uint64_t memAddr = curSection->addr;
 	           
-	            textStart = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
-	            textEnd = textStart + curSection->size;
-	            /*
+	            uint64_t textStart = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
+	            uint64_t textEnd = textStart + curSection->size;
 	            [retStr appendString:@" "];
 	            [retStr appendString:(id)[@(textStart) stringValue]];
 	            [retStr appendString:@" , "];
 	            [retStr appendString:(id)[@(textEnd) stringValue]];
-	            */
 	            break;
 	        }
+	        
 	    }
 	}
-	char ret[50];
 
-	char textStartAddrStr[20];
-	sprintf(textStartAddrStr, "0x%016lx", textStart);
-
-	char textEndAddrStr[20];
-	sprintf(textEndAddrStr, "0x%016lx", textEnd);
-
-
-	char* splitStr = ",";
-	strcpy(ret,textStartAddrStr);
-	strcat(ret,splitStr);
-	strcat(ret,textEndAddrStr);
-
-	ret
+	retStr
 	'''
 	retStr = exeScript(debugger, command_script)
 	return hexIntInStr(retStr)
 
-def lookupSVCIns(debugger, startAddr, endAddr):
+def lookupObjectC(debugger, startAddr, endAddr):
 	command_script = '@import Foundation;\n'
 	command_script += 'uint64_t text_start = {};uint64_t text_end = {};\n'.format(startAddr, endAddr)
 	command_script += r'''
@@ -375,7 +359,6 @@ def lookupSVCIns(debugger, startAddr, endAddr):
 	uint8_t * p = (uint8_t*)text_start;
     int size = text_end - text_start;
 
-    char* ret = (char *)malloc(sizeof(char));
     for(int i = 0; i < size ;i++ ){
         /*
          mov       x16, #0x1a -> 0xd2800350
@@ -669,7 +652,7 @@ def xia0Hook(debugger, svcAddr):
 	retStr = exeScript(debugger, command_script)
 	return hexIntInStr(retStr)
 
-def debugme(debugger):
+def traceOC(debugger):
 	print("[*] start patch ptrace funtion to bypass antiDebug")
 	patchPtrace(debugger)
 	print("[+] success ptrace funtion to bypass antiDebug")
@@ -678,10 +661,6 @@ def debugme(debugger):
 	# get text segment start/end address 
 	
 	ret = getTextSegmentAddr(debugger)
-	# remove " \n"
-	ret = ret.strip()
-	ret = ret[1:-1]
-
 	textAddrs = ret.split(',')
 
 	if len(textAddrs) < 2:
@@ -696,8 +675,7 @@ def debugme(debugger):
 	print("[+] get text segment start address:{} and end address:{}".format(textStart, textEnd))
 	
 	# lookup svc ins go through all text code
-	ret = lookupSVCIns(debugger, textStart, textEnd)
-
+	ret = lookupObjectC(debugger, textStart, textEnd)
 	svcAddrs = ret.strip()
 	svcAddrs = svcAddrs.split()
 
@@ -749,7 +727,7 @@ def generateOptions():
 	return expr_options
 
 def generate_option_parser():
-	usage = "debugme"
+	usage = "traceOC"
 	parser = optparse.OptionParser(usage=usage, prog="lookup")
 
 	parser.add_option("-a", "--address",
