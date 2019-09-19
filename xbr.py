@@ -59,6 +59,20 @@ def is_br_all_cmd(args):
         return False
     return True
 
+def is_just_address_cmd(args):
+    if len(args) == 0:
+        return False
+
+    arg = args[0]
+    if len(arg) == 0:
+        return False
+
+    ret = re.match('^0x[0-9a-fA-F]+$', arg)
+
+    if not ret:
+        return False
+    return True
+
 def get_class_name(arg):
     match = re.search('(?<=\[)[^\[].*[^ ](?= +)', arg) # TODO: more strict
     if match:
@@ -173,9 +187,91 @@ def getAllMethodAddressOfClass(debugger, classname):
     retStr = exeScript(debugger, command_script)
     return retStr
 
+def getProcessModuleSlide(debugger, modulePath):
+    command_script = r'''
+    uint32_t count = (uint32_t)_dyld_image_count();
+    NSMutableString* retStr = [NSMutableString string];
+    uint32_t idx = 0;
+    NSString* image_name = @"";
+    const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
+    '''
+   
+    if modulePath:
+        command_script += 'NSString* modulePath = @"{}"\n'.format(modulePath)
+    else:
+        command_script += 'NSString* modulePath = [[NSString alloc] initWithUTF8String:path];'
+
+    command_script += r'''
+    NSString* imagePath = modulePath;
+    for(uint32_t i = 0; i < count; i++){
+        const char* imageName = (const char*)_dyld_get_image_name(i);
+        NSString* imageNameStr = [[NSString alloc] initWithUTF8String:imageName];
+        if([imageNameStr isEqualToString:imagePath]){
+            idx = i;
+            image_name = imageNameStr;
+            break;
+        }
+    }
+    uintptr_t slide =  (uintptr_t)_dyld_get_image_vmaddr_slide(idx);
+    NSString *slideStr = [@(slide) stringValue];
+    [retStr appendString:image_name];
+    [retStr appendString:@"#"];
+    [retStr appendString:slideStr];
+
+    slideStr
+    '''
+    slide = exeScript(debugger, command_script)
+    return slide
 
 def xbr(debugger, command, result, dict):
     args = create_command_arguments(command)
+
+    command_args = shlex.split(command, posix=False)
+    parser = generate_option_parser()
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        result.SetError(parser.usage)
+        return
+
+    # check is options?
+    if options.address:
+        targetAddr = options.address
+
+        if targetAddr.startswith("0x"):
+            targetAddr_int = int(targetAddr, 16)
+        else:
+            targetAddr_int = int(targetAddr, 10)
+          
+        print("[*] breakpoint at address:{}".format(hex(targetAddr_int)))
+        lldb.debugger.HandleCommand ('breakpoint set --address %d' % targetAddr_int)
+        return
+
+    # check is arg is address ? mean auto add slide
+    if is_just_address_cmd(args):
+
+        if options.modulePath:
+            modulePath = options.modulePath
+            print("[*] you specail the module:" + modulePath)
+        else:
+            print("[*] you not specail the module, default is main module")
+            modulePath = None
+
+        targetAddr = args[0]
+
+        if targetAddr.startswith("0x"):
+            targetAddr_int = int(targetAddr, 16)
+        else:
+            targetAddr_int = int(targetAddr, 10)
+        
+        moduleSlide = getProcessModuleSlide(debugger, modulePath)
+        moduleSlide = int(moduleSlide, 10)
+        brAddr = moduleSlide + targetAddr_int
+
+        print("[*] ida's address:{} main module slide:{} target breakpoint address:{}".format(hex(targetAddr_int), hex(moduleSlide), hex(brAddr)))
+        
+        lldb.debugger.HandleCommand ('breakpoint set --address %d' % brAddr)
+        return
 
     # check is breakpoint at all methods address(IMP) for given classname
     if is_br_all_cmd(args):
@@ -192,6 +288,7 @@ def xbr(debugger, command, result, dict):
         result.AppendMessage("Set %ld breakpoints of %s" % (len(addrArr),classname))
         return
     
+
 
     if not is_command_valid(args):
         print 'please specify the param, for example: "-[UIView initWithFrame:]"'
@@ -213,3 +310,21 @@ def xbr(debugger, command, result, dict):
         lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
     else:
         print "fail, please check the arguments"
+
+def generate_option_parser():
+    usage = "usage: xbr [options] args"
+    parser = optparse.OptionParser(usage=usage, prog="lookup")
+
+    parser.add_option("-a", "--address",
+                        action="store",
+                        default=None,
+                        dest="address",
+                        help="set a breakpoint at absolute address")
+
+    parser.add_option("-m", "--modulePath",
+                action="store",
+                default=None,
+                dest="modulePath",
+                help="set a breakpoint at address auto add given module")
+
+    return parser
