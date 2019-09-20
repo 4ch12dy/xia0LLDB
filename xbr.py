@@ -20,6 +20,7 @@ import commands
 import shlex
 import optparse
 import re
+from xia0 import *
 
 def __lldb_init_module (debugger, dict):
     debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
@@ -243,7 +244,7 @@ def xbr(debugger, command, result, dict):
         else:
             targetAddr_int = int(targetAddr, 10)
           
-        print("[*] breakpoint at address:{}".format(hex(targetAddr_int)))
+        print("[*] breakpoint at address:{}".format(ILOG(hex(targetAddr_int))))
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % targetAddr_int)
         return
 
@@ -252,7 +253,7 @@ def xbr(debugger, command, result, dict):
 
         if options.modulePath:
             modulePath = options.modulePath
-            print("[*] you specail the module:" + modulePath)
+            print("[*] you specail the module:" + ILOG(modulePath))
         else:
             print("[*] you not specail the module, default is main module")
             modulePath = None
@@ -268,7 +269,7 @@ def xbr(debugger, command, result, dict):
         moduleSlide = int(moduleSlide, 10)
         brAddr = moduleSlide + targetAddr_int
 
-        print("[*] ida's address:{} main module slide:{} target breakpoint address:{}".format(hex(targetAddr_int), hex(moduleSlide), hex(brAddr)))
+        print("[*] ida's address:{} main module slide:{} target breakpoint address:{}".format(ILOG(hex(targetAddr_int)), ILOG(hex(moduleSlide)), ILOG(hex(brAddr))))
         
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % brAddr)
         return

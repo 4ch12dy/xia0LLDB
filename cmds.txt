@@ -6,10 +6,14 @@ command regex ivars -h "Dumps all ivars for an instance of a particular class wh
 
 command regex methods -h "Dumps all methods implemented by the NSObject subclass (iOS, NSObject subclass only)" -s "methods UIView" -- 's/(.+)/expression -lobjc -O -- [%1 _shortMethodDescription]/'
 
+command alias rr register read $x0 $x1 $x2 $x3 $x4 $x5 $x6 $x7 $x8 $pc $lr $sp
+
 command regex pclass 's/(([0-9]|\$|\@|\[).*)/po [%1 class]/'
 
 settings set target.x86-disassembly-flavor intel
 
 settings set stop-disassembly-count 8
 
-settings set target.max-string-summary-length 16384
+settings set target.max-string-summary-length 30000
+
+pcc
