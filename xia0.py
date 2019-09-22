@@ -1,3 +1,5 @@
+import re
+
 
 IS_NO_COLOR_OUTPUT = False
 
@@ -7,6 +9,18 @@ def ILOG(msg):
 
 def ELOG(msg):
     return attrStr(msg, 'red')
+
+def hexIntInStr(needHexStr):
+
+    def handler(reobj):
+        intvalueStr = reobj.group(0)
+        
+        r = hex(int(intvalueStr))
+        return r
+
+    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
+
+    return re.sub(pattern, handler, needHexStr, flags = 0)
 
 
 def attrStr(msg, color='black'):   

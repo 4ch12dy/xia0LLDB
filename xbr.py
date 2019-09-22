@@ -188,6 +188,225 @@ def getAllMethodAddressOfClass(debugger, classname):
     retStr = exeScript(debugger, command_script)
     return retStr
 
+def getMachODATAModInitFirstAddress(debugger):
+    command_script = '@import Foundation;'
+    command_script += r'''
+    //NSMutableString* retStr = [NSMutableString string];
+
+    #define MH_MAGIC_64 0xfeedfacf 
+    #define LC_SEGMENT_64   0x19
+    typedef int                     integer_t;
+    typedef integer_t       cpu_type_t;
+    typedef integer_t       cpu_subtype_t;
+    typedef integer_t       cpu_threadtype_t;
+
+    struct mach_header_64 {
+        uint32_t    magic;      /* mach magic number identifier */
+        cpu_type_t  cputype;    /* cpu specifier */
+        cpu_subtype_t   cpusubtype; /* machine specifier */
+        uint32_t    filetype;   /* type of file */
+        uint32_t    ncmds;      /* number of load commands */
+        uint32_t    sizeofcmds; /* the size of all the load commands */
+        uint32_t    flags;      /* flags */
+        uint32_t    reserved;   /* reserved */
+    };
+
+    struct load_command {
+        uint32_t cmd;       /* type of load command */
+        uint32_t cmdsize;   /* total size of command in bytes */
+    };
+
+    typedef int             vm_prot_t;
+    struct segment_command_64 { /* for 64-bit architectures */
+        uint32_t    cmd;        /* LC_SEGMENT_64 */
+        uint32_t    cmdsize;    /* includes sizeof section_64 structs */
+        char        segname[16];    /* segment name */
+        uint64_t    vmaddr;     /* memory address of this segment */
+        uint64_t    vmsize;     /* memory size of this segment */
+        uint64_t    fileoff;    /* file offset of this segment */
+        uint64_t    filesize;   /* amount to map from the file */
+        vm_prot_t   maxprot;    /* maximum VM protection */
+        vm_prot_t   initprot;   /* initial VM protection */
+        uint32_t    nsects;     /* number of sections in segment */
+        uint32_t    flags;      /* flags */
+    };
+
+    struct section_64 { /* for 64-bit architectures */
+        char        sectname[16];   /* name of this section */
+        char        segname[16];    /* segment this section goes in */
+        uint64_t    addr;       /* memory address of this section */
+        uint64_t    size;       /* size in bytes of this section */
+        uint32_t    offset;     /* file offset of this section */
+        uint32_t    align;      /* section alignment (power of 2) */
+        uint32_t    reloff;     /* file offset of relocation entries */
+        uint32_t    nreloc;     /* number of relocation entries */
+        uint32_t    flags;      /* flags (section type and attributes)*/
+        uint32_t    reserved1;  /* reserved (for offset or index) */
+        uint32_t    reserved2;  /* reserved (for count or sizeof) */
+        uint32_t    reserved3;  /* reserved */
+    };
+
+    int offset = 0;
+    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
+
+    if(header->magic != MH_MAGIC_64) {
+        return ;
+    }
+
+    offset = sizeof(struct mach_header_64);
+    int ncmds = header->ncmds;
+    uint64_t modInitFirstAddr = 0;
+    char* secName;
+
+    while(ncmds--) {
+        /* go through all load command to find __TEXT segment*/
+        struct load_command * lcp = (struct load_command *)((uint8_t*)header + offset);
+        offset += lcp->cmdsize;
+        
+        if(lcp->cmd == LC_SEGMENT_64) {
+            struct segment_command_64 * curSegment = (struct segment_command_64 *)lcp;
+            struct section_64* curSection = (struct section_64*)((uint8_t*)curSegment + sizeof(struct segment_command_64));
+            
+            if(!strcmp(curSection->segname, "__DATA")){
+
+                for (int i = 0; i < curSegment->nsects; i++) {
+
+                    if (!strcmp(curSection->sectname, "__mod_init_func")) {
+                        uint64_t memAddr = curSection->addr;
+                        uint64_t modInitAddrArr = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
+                        modInitFirstAddr = *((uint64_t*)modInitAddrArr)
+                        break;
+                    }
+                    curSection = (struct section_64*)((uint8_t*)curSection + sizeof(struct section_64));
+                }
+                break;
+            }
+        }
+    }
+    char ret[50];
+
+    sprintf(ret, "0x%016lx", modInitFirstAddr);
+
+    ret
+    '''
+    retStr = exeScript(debugger, command_script)
+    return hexIntInStr(retStr)
+
+def getMachOEntryOffset(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+    //NSMutableString* retStr = [NSMutableString string];
+
+    #define MH_MAGIC_64 0xfeedfacf 
+    #define LC_SEGMENT_64   0x19
+    #define LC_REQ_DYLD     0x80000000
+    #define LC_MAIN         (0x28|LC_REQ_DYLD)
+
+    typedef int             integer_t;
+    typedef integer_t       cpu_type_t;
+    typedef integer_t       cpu_subtype_t;
+    typedef integer_t       cpu_threadtype_t;
+
+    struct mach_header_64 {
+        uint32_t    magic;      /* mach magic number identifier */
+        cpu_type_t  cputype;    /* cpu specifier */
+        cpu_subtype_t   cpusubtype; /* machine specifier */
+        uint32_t    filetype;   /* type of file */
+        uint32_t    ncmds;      /* number of load commands */
+        uint32_t    sizeofcmds; /* the size of all the load commands */
+        uint32_t    flags;      /* flags */
+        uint32_t    reserved;   /* reserved */
+    };
+
+    struct load_command {
+        uint32_t cmd;       /* type of load command */
+        uint32_t cmdsize;   /* total size of command in bytes */
+    };
+
+    typedef int             vm_prot_t;
+    struct segment_command_64 { /* for 64-bit architectures */
+        uint32_t    cmd;        /* LC_SEGMENT_64 */
+        uint32_t    cmdsize;    /* includes sizeof section_64 structs */
+        char        segname[16];    /* segment name */
+        uint64_t    vmaddr;     /* memory address of this segment */
+        uint64_t    vmsize;     /* memory size of this segment */
+        uint64_t    fileoff;    /* file offset of this segment */
+        uint64_t    filesize;   /* amount to map from the file */
+        vm_prot_t   maxprot;    /* maximum VM protection */
+        vm_prot_t   initprot;   /* initial VM protection */
+        uint32_t    nsects;     /* number of sections in segment */
+        uint32_t    flags;      /* flags */
+    };
+
+    struct section_64 { /* for 64-bit architectures */
+        char        sectname[16];   /* name of this section */
+        char        segname[16];    /* segment this section goes in */
+        uint64_t    addr;       /* memory address of this section */
+        uint64_t    size;       /* size in bytes of this section */
+        uint32_t    offset;     /* file offset of this section */
+        uint32_t    align;      /* section alignment (power of 2) */
+        uint32_t    reloff;     /* file offset of relocation entries */
+        uint32_t    nreloc;     /* number of relocation entries */
+        uint32_t    flags;      /* flags (section type and attributes)*/
+        uint32_t    reserved1;  /* reserved (for offset or index) */
+        uint32_t    reserved2;  /* reserved (for count or sizeof) */
+        uint32_t    reserved3;  /* reserved */
+    };
+
+    struct entry_point_command {
+        uint32_t  cmd;  /* LC_MAIN only used in MH_EXECUTE filetypes */
+        uint32_t  cmdsize;  /* 24 */
+        uint64_t  entryoff; /* file (__TEXT) offset of main() */
+        uint64_t  stacksize;/* if not zero, initial stack size */
+    };
+
+    int offset = 0;
+    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
+
+    if(header->magic != MH_MAGIC_64) {
+        return ;
+    }
+
+    offset = sizeof(struct mach_header_64);
+    int ncmds = header->ncmds;
+    //uint64_t textStart = 0;
+    //uint64_t textEnd = 0;
+    uint64_t main_addr = 0;
+    while(ncmds--) {
+        /* go through all load command to find __TEXT segment*/
+        struct load_command * lcp = (struct load_command *)((uint8_t*)header + offset);
+        offset += lcp->cmdsize;
+        if(lcp->cmd == LC_MAIN) {
+            uintptr_t slide =  (uintptr_t)_dyld_get_image_vmaddr_slide(0);          
+            struct entry_point_command* main_cmd = (struct entry_point_command*)lcp;
+            main_addr = (uint64_t)slide + main_cmd->entryoff + 0x100000000;
+
+            break;
+        }
+    }
+    char ret[50];
+
+    /*
+    char textStartAddrStr[20];
+    sprintf(textStartAddrStr, "0x%016lx", textStart);
+
+    char textEndAddrStr[20];
+    sprintf(textEndAddrStr, "0x%016lx", textEnd);
+
+
+    char* splitStr = ",";
+    strcpy(ret,textStartAddrStr);
+    strcat(ret,splitStr);
+    strcat(ret,textEndAddrStr);
+    */
+
+    sprintf(ret, "0x%016lx", main_addr);
+
+    ret
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
+
 def getProcessModuleSlide(debugger, modulePath):
     command_script = r'''
     uint32_t count = (uint32_t)_dyld_image_count();
@@ -247,6 +466,23 @@ def xbr(debugger, command, result, dict):
         print("[*] breakpoint at address:{}".format(ILOG(hex(targetAddr_int))))
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % targetAddr_int)
         return
+
+    if options.entryAddress:
+        if options.entryAddress == "main":
+            entryAddrStr = getMachOEntryOffset(debugger)
+            entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
+            print("[*] breakpoint at main function:{}".format(ILOG(hex(entryAddr_int))))
+            lldb.debugger.HandleCommand ('breakpoint set --address %d' % entryAddr_int)
+        elif options.entryAddress == "init":
+            initFunAddrStr = getMachODATAModInitFirstAddress(debugger)
+            initFunAddr_int = int(initFunAddrStr.strip()[1:-1], 16)
+            print("[*] breakpoint at mod int first function:{}".format(ILOG(hex(initFunAddr_int))))
+            lldb.debugger.HandleCommand ('breakpoint set --address %d' % initFunAddr_int)
+        else:
+            print(ELOG("[*] you should specail the -E options:[main/init]"))
+
+        return
+        
 
     # check is arg is address ? mean auto add slide
     if is_just_address_cmd(args):
@@ -313,7 +549,7 @@ def xbr(debugger, command, result, dict):
         print "fail, please check the arguments"
 
 def generate_option_parser():
-    usage = "usage: xbr [options] args"
+    usage = "usage: xbr [-a/-m/-E] args"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
 
     parser.add_option("-a", "--address",
@@ -327,5 +563,11 @@ def generate_option_parser():
                 default=None,
                 dest="modulePath",
                 help="set a breakpoint at address auto add given module")
+
+    parser.add_option("-E", "--entryAddress",
+            action="store",
+            default=None,
+            dest="entryAddress",
+            help="set a breakpoint at entry address/main")
 
     return parser
