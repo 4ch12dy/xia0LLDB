@@ -361,7 +361,7 @@ def dumpdecrypted(debugger):
 
     printf("[*] This mach-o file decrypted done.\n");
         
-    NSString* xia0 = @"\nDeveloped By xia0@2019\n"
+    NSString* xia0 = @"\nDeveloped By xia0@2019 \n"
     
     xia0
     '''
