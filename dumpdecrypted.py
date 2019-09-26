@@ -54,6 +54,7 @@ def getMainImagePath(debugger):
 
 def getMainImageMachOHeader(debugger):
     command_script = r''' 
+
     typedef integer_t       cpu_type_t;
     typedef integer_t       cpu_subtype_t;
     typedef integer_t       cpu_threadtype_t;
@@ -101,11 +102,23 @@ def dumpdecrypted(debugger):
     #define SEEK_CUR    1   /* set file offset to current plus offset */
     #define SEEK_SET    0
 
-    #define errno (*__error())
+    #define O_CREAT         0x0200          /* create if nonexistant */
+    #define O_TRUNC         0x0400          /* truncate to zero length */
+    #define O_EXCL          0x0800          /* error if already exists */
 
+    #define SEEK_END    2
+    // #define errno (*__error())
+
+    typedef long long               __int64_t;
+    typedef __int64_t       __darwin_off_t;         /* [???] Used for file sizes */
+    typedef __darwin_off_t          off_t;
+
+    typedef int                     integer_t;
     typedef integer_t       cpu_type_t;
     typedef integer_t       cpu_subtype_t;
     typedef integer_t       cpu_threadtype_t;
+
+    
 
     #define swap32(value) (((value & 0xFF000000) >> 24) | ((value & 0x00FF0000) >> 8) | ((value & 0x0000FF00) << 8) | ((value & 0x000000FF) << 24) )
 
@@ -166,17 +179,17 @@ def dumpdecrypted(debugger):
     struct encryption_info_command *eic;
     struct fat_header *fh;
     struct fat_arch *arch;
-    char buffer[1024];
+    char x_buffer[1024];
     char rpath[4096],npath[4096]; /* should be big enough for PATH_MAX */
     unsigned int fileoffs = 0, off_cryptid = 0, restsize;
     int i,fd,outfd,r,n,toread;
     char *tmp;
     
-    if (realpath(path, rpath) == NULL) {
+    if ((char*)realpath(path, rpath) == NULL) {
         strlcpy(rpath, path, sizeof(rpath));
     }
     /* extract basename */
-    tmp = strrchr(rpath, '/');
+    tmp = (char*)strrchr(rpath, '/');
     printf("\n\n");
     if (tmp == NULL) {
         printf("[-] Unexpected error with filename.\n");
@@ -212,19 +225,19 @@ def dumpdecrypted(debugger):
             
             printf("[+] Opening %s for reading.\n", rpath);
 
-            fd = open(rpath, O_RDONLY);
+            fd = (int)open(rpath, O_RDONLY);
             if (fd == -1) {
                 printf("[-] Failed opening.\n");
                 break;
             }
             printf("[+] Reading header\n");
-            n = read(fd, (void *)buffer, sizeof(buffer));
-            if (n != sizeof(buffer)) {
+            n = (long)read(fd, (void *)x_buffer, sizeof(x_buffer));
+            if (n != sizeof(x_buffer)) {
                 printf("[W] Warning read only %d bytes\n", n);
             }
 
             printf("[+] Detecting header type\n");
-            fh = (struct fat_header *)buffer;
+            fh = (struct fat_header *)x_buffer;
 
             /* Is this a FAT file - we assume the right endianess */
             if (fh->magic == FAT_CIGAM) {
@@ -249,22 +262,23 @@ def dumpdecrypted(debugger):
                 break;
             }
 
-            NSString *docPath = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+            // NSDocumentDirectory == 9 NSUserDomainMask == 1   
+            NSString *docPath = ((NSArray*)NSSearchPathForDirectoriesInDomains(9, 1, YES))[0];
             
             strlcpy(npath, docPath.UTF8String, sizeof(npath));
             strlcat(npath, tmp, sizeof(npath));
             strlcat(npath, ".decrypted", sizeof(npath));
-            strlcpy(buffer, npath, sizeof(buffer));
+            strlcpy(x_buffer, npath, sizeof(x_buffer));
             printf("[+] Opening %s for writing.\n", npath);
 
-            outfd = open(npath, O_RDWR|O_CREAT|O_TRUNC, 0644);
+            outfd = (int)open(npath, O_RDWR|O_CREAT|O_TRUNC, 0644);
             if (outfd == -1) {
-                if (strncmp("/private/var/mobile/Applications/", rpath, 33) == 0) {
+                if ((int)strncmp("/private/var/mobile/Applications/", rpath, 33) == 0) {
                     printf("[-] Failed opening. Most probably a sandbox issue. Trying something different.\n");
                     
                     /* create new name */
                     strlcpy(npath, "/private/var/mobile/Applications/", sizeof(npath));
-                    tmp = strchr(rpath+33, '/');
+                    tmp = (char*)strchr(rpath+33, '/');
                     if (tmp == NULL) {
                         printf("[-] Unexpected error with filename.\n");
                         return;
@@ -273,9 +287,9 @@ def dumpdecrypted(debugger):
                     *tmp++ = 0;
                     strlcat(npath, rpath+33, sizeof(npath));
                     strlcat(npath, "tmp/", sizeof(npath));
-                    strlcat(npath, buffer, sizeof(npath));
+                    strlcat(npath, x_buffer, sizeof(npath));
                     printf("[+] Opening %s for writing.\n", npath);
-                    outfd = open(npath, O_RDWR|O_CREAT|O_TRUNC, 0644);
+                    outfd = (int)open(npath, O_RDWR|O_CREAT|O_TRUNC, 0644);
                 }
                 if (outfd == -1) {
                     printf("[-] Failed opening\n");
@@ -286,21 +300,21 @@ def dumpdecrypted(debugger):
             /* calculate address of beginning of crypted data */
             n = fileoffs + eic->cryptoff;
             
-            restsize = lseek(fd, 0, SEEK_END) - n - eic->cryptsize;
-            lseek(fd, 0, SEEK_SET);
+            restsize = (off_t)lseek(fd, 0, SEEK_END) - n - eic->cryptsize;
+            (off_t)lseek(fd, 0, SEEK_SET);
             
             printf("[+] Copying the not encrypted start of the file\n");
             /* first copy all the data before the encrypted data */
             while (n > 0) {
-                toread = (n > sizeof(buffer)) ? sizeof(buffer) : n;
-                r = read(fd, buffer, toread);
+                toread = (n > sizeof(x_buffer)) ? sizeof(x_buffer) : n;
+                r = (long)read(fd, x_buffer, toread);
                 if (r != toread) {
                     printf("[-] Error reading file\n");
                     return;
                 }
                 n -= r;
                 
-                r = write(outfd, buffer, toread);
+                r = (long)write(outfd, x_buffer, toread);
                 if (r != toread) {
                     printf("[-] Error writing file\n");
                     return;
@@ -313,38 +327,38 @@ def dumpdecrypted(debugger):
 
             // (unsigned char *)mh + eic->cryptoff
 
-            r = write(outfd, (unsigned char *)mh + eic->cryptoff, eic->cryptsize);
+            r = (long)write(outfd, (unsigned char *)mh + eic->cryptoff, eic->cryptsize);
             if (r != eic->cryptsize) {
                 uint64_t flag = (uint64_t)(mh);
-                printf("Error no.%d: %s\n", errno, strerror(errno));
+                // printf("Error no.%d: %s\n", errno, strerror(errno));
                 printf("[-] Error writing file r=%lx offset=%lx size=%lx flag=%lx\n", r,eic->cryptoff, eic->cryptsize, flag);
                 return;
             }
             
             /* and finish with the remainder of the file */
             n = restsize;
-            lseek(fd, eic->cryptsize, SEEK_CUR);
+            (off_t)lseek(fd, eic->cryptsize, SEEK_CUR);
             printf("[+] Copying the not encrypted remainder of the file\n");
             while (n > 0) {
-                toread = (n > sizeof(buffer)) ? sizeof(buffer) : n;
-                r = read(fd, buffer, toread);
+                toread = (n > sizeof(x_buffer)) ? sizeof(x_buffer) : n;
+                r = (long)read(fd, x_buffer, toread);
                 if (r != toread) {
                     printf("[-] Error reading file\n");
                     return;
                 }
                 n -= r;
                 
-                r = write(outfd, buffer, toread);
+                r = (long)write(outfd, x_buffer, toread);
                 if (r != toread) {
                     printf("[-] Error writing file\n");
                     return;
                 }
             }
             if (off_cryptid) {
-                uint32_t zero=0;
+                uint32_t x_zero=0;
                 off_cryptid+=fileoffs;
                 printf("[+] Setting the LC_ENCRYPTION_INFO->cryptid to 0 at offset %x\n", off_cryptid);
-                if (lseek(outfd, off_cryptid, SEEK_SET) != off_cryptid || write(outfd, &zero, 4) != 4) {
+                if (((off_t)lseek(outfd, off_cryptid, SEEK_SET)) != off_cryptid || (long)write(outfd, &x_zero, 4) != 4) {
                     printf("[-] Error writing cryptid value\n");
                 }
             }
@@ -360,10 +374,14 @@ def dumpdecrypted(debugger):
     }
 
     printf("[*] This mach-o file decrypted done.\n");
-        
-    NSString* xia0 = @"\nDeveloped By xia0@2019 \n"
+      
+    NSMutableString* retStr = [NSMutableString string];
+    [retStr appendString:@"[+] dump macho file at:\n"];
+    [retStr appendString:@(npath)];
+    NSString* xia0 = @"\n\n[*] Developed By xia0@2019";
+    [retStr appendString:xia0];
     
-    xia0
+    retStr
     '''
     ret = exeScript(debugger, command_script)
 
