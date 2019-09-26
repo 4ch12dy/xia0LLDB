@@ -444,7 +444,7 @@ def getProcessModuleSlide(debugger, modulePath):
     return slide
 
 def xbr(debugger, command, result, dict):
-    args = create_command_arguments(command)
+    raw_args = create_command_arguments(command)
 
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
@@ -527,22 +527,23 @@ def xbr(debugger, command, result, dict):
     
 
 
-    if not is_command_valid(args):
+    if not is_command_valid(raw_args):
         print 'please specify the param, for example: "-[UIView initWithFrame:]"'
         return
 
-    arg = args[0]
-    class_name = get_class_name(arg)
-    method_name = get_method_name(arg)
+    arg_ = raw_args[0]
+    class_name = get_class_name(arg_)
+    method_name = get_method_name(arg_)
 #    xlog = 'className:'+ str(class_name) + '\tmethodName:' + str(method_name)
-    print class_name, method_name
+    print("[*] className:{} methodName:{}".format(class_name, method_name))
+    # print class_name, method_name
     address = 0
-    if is_class_method(arg):
+    if is_class_method(arg_):
         address = get_class_method_address(class_name, method_name)
     else:
         address = get_instance_method_address(class_name, method_name)
 
-    print 'methodAddr:%x' % address
+    print('[+] found method address:%x' % address)
     if address:
         lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
     else:
