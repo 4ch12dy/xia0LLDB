@@ -124,12 +124,12 @@ def get_class_method_address(class_name, method_name):
 def get_instance_method_address(class_name, method_name):
     frame = get_selected_frame();
     class_addr = frame.EvaluateExpression("(Class)NSClassFromString(@\"%s\")" % class_name).GetValueAsUnsigned()
-    print 'classAddr:%x' % class_addr
+    print('[+] found class address:0x%x' % class_addr)
     if class_addr == 0:
         return 0
 
     sel_addr = frame.EvaluateExpression("(SEL)NSSelectorFromString(@\"%s\")" % method_name).GetValueAsUnsigned()
-    print 'selAddr:%x' % sel_addr
+    print('[+] found selector address:0x%x' % sel_addr)
     has_method = frame.EvaluateExpression("(BOOL)class_respondsToSelector(%d, %d)" % (class_addr, sel_addr)).GetValueAsUnsigned()
     if not has_method:
         return 0
@@ -543,7 +543,7 @@ def xbr(debugger, command, result, dict):
     else:
         address = get_instance_method_address(class_name, method_name)
 
-    print('[+] found method address:%x' % address)
+    print('[+] found method address:0x%x' % address)
     if address:
         lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
     else:
