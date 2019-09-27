@@ -698,6 +698,10 @@ def debugme(debugger):
     # lookup svc ins go through all text code
     ret = lookupSVCIns(debugger, textStart, textEnd)
 
+    if "<object returned empty description>" in ret:
+        print("[*] not found svc ins, so don't need patch")
+        return
+    
     svcAddrs = ret.strip()
     svcAddrs = svcAddrs.split()
 
