@@ -79,7 +79,30 @@ def getMainImageMachOHeader(debugger):
     ret = exeScript(debugger, command_script)
     return hex(int(ret, 10))
 
-def dumpdecrypted(debugger):
+def getAllImageOfApp(debugger, appDir):
+    command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";' 
+    command_script += r'''
+    NSMutableString* retStr = [NSMutableString string];
+    
+    uint32_t count = (uint32_t)_dyld_image_count();
+    for(uint32_t i = 0; i < count; i++){
+        char* curModuleName_cstr = (char*)_dyld_get_image_name(i);
+        long slide = (long)_dyld_get_image_vmaddr_slide(i);
+        uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
+        NSString* curModuleName = @(curModuleName_cstr);
+        if([curModuleName containsString:appDir]) {
+            [retStr appendString:(id)[@(i) stringValue]];
+            [retStr appendString:@","];
+            [retStr appendString:@(curModuleName_cstr)];
+            [retStr appendString:@"#"];
+        }
+    }
+    retStr
+    '''
+    ret = exeScript(debugger, command_script)
+    return ret
+
+def dumpMachoToFile(debugger, machoIdx, machoPath):
     command_script_header = r'''
     // header
     #define MH_MAGIC    0xfeedface  /* the mach magic number */
@@ -169,8 +192,8 @@ def dumpdecrypted(debugger):
         uint32_t    align;      /* alignment as a power of 2 */
     };
     '''
-    command_script_init = 'struct mach_header* mh = (struct mach_header*)_dyld_get_image_header(0);'
-    command_script_init += 'const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];'
+    command_script_init = 'struct mach_header* mh = (struct mach_header*)_dyld_get_image_header({});'.format(machoIdx) 
+    command_script_init += 'const char *path = "{}"'.format(machoPath)
 
     command_script = command_script_header + command_script_init
 
@@ -376,10 +399,8 @@ def dumpdecrypted(debugger):
     printf("[*] This mach-o file decrypted done.\n");
       
     NSMutableString* retStr = [NSMutableString string];
-    [retStr appendString:@"[+] dump macho file at:\n"];
+    [retStr appendString:@"[+] dump macho file at:"];
     [retStr appendString:@(npath)];
-    NSString* xia0 = @"\n\n[*] Developed By xia0@2019";
-    [retStr appendString:xia0];
     
     retStr
     '''
@@ -387,6 +408,29 @@ def dumpdecrypted(debugger):
 
     return ret
 
+
+def dumpdecrypted(debugger):
+    #dumpMachoToFile(debugger,)
+    mainImagePath = getMainImagePath(debugger)
+    appDir = os.path.dirname(mainImagePath)
+
+    appImagesStr = getAllImageOfApp(debugger, appDir)
+
+    appImagesArr = appImagesStr.split("#")
+
+    for imageInfo in appImagesArr:
+        if not imageInfo:
+            continue
+
+        info = imageInfo.split(",")
+
+        if len(info) == 2:
+            print("[*] start dump image:" + info[1])
+            # print "idx:" + info[0]
+            # print "path:" + info[1]
+            print dumpMachoToFile(debugger, info[0], info[1])
+
+    return "\n\n[*] Developed By xia0@2019"
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()
