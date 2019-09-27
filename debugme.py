@@ -311,22 +311,22 @@ def getTextSegmentAddr(debugger):
         uint32_t    reserved3;  /* reserved */
     };
 
-    int offset = 0;
+    int x_offset = 0;
     struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
 
     if(header->magic != MH_MAGIC_64) {
         return ;
     }
 
-    offset = sizeof(struct mach_header_64);
+    x_offset = sizeof(struct mach_header_64);
     int ncmds = header->ncmds;
     uint64_t textStart = 0;
     uint64_t textEnd = 0;
 
     while(ncmds--) {
         /* go through all load command to find __TEXT segment*/
-        struct load_command * lcp = (struct load_command *)((uint8_t*)header + offset);
-        offset += lcp->cmdsize;
+        struct load_command * lcp = (struct load_command *)((uint8_t*)header + x_offset);
+        x_offset += lcp->cmdsize;
         
         if(lcp->cmd == LC_SEGMENT_64) {
             struct segment_command_64 * curSegment = (struct segment_command_64 *)lcp;
