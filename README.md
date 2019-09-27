@@ -22,6 +22,7 @@ Happy debugging~~
 - `ivars`  print all ivars of OC object (iOS Only)
 - `methods`print all methods of OC object (iOS Only)
 - `choose` get instance object of given class name, a lldb version of cycript's choose command
+- `dumpdecrypted` dump macho file in lldb
 
 ### TODO
 
@@ -30,6 +31,7 @@ Happy debugging~~
 - NetworkLog：minitor network info
 - UI Debug：some useful command for UI debug
 - xbr: set breakpoint at address of methods of class（done at 2019/08/11）
+- traceOC: trace ObjectC call by inlinehook msg_send stub code
 - ...
 
 ### Update
@@ -41,6 +43,8 @@ Happy debugging~~
 - [2019/08/13] New **debugme**: kill anti debug in lldb
 - [2019/08/20] New **info**:  get info of address/function/module and so on
 - [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
+- [2019/09/22] new **dumpdecrypted**: dump macho image in lldb
+- [2019/09/27] **dumpdecrypted** update: can dump all image in app dir 
 
 
 
@@ -213,6 +217,105 @@ get info of address/function/module and so on
 
 ```
 usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
+```
+
+
+
+#### Update xbr 2019/09/22
+
+add new options :  set breakpoint at main/init function and more set br utils
+
+##### set br at main/init func
+
+parse macho image in memory and found `LC_MAIN` and `__DATA,__mod_init_func`
+
+```
+(lldb) xbr -E init
+[*] breakpoint at mod int first function:0x1034c7db8
+Breakpoint 2: where = WeChat ___lldb_unnamed_symbol143521$$WeChat, address = 0x00000001034c7db8
+
+(lldb) xbr -E main
+[*] breakpoint at main function:0x10001ba94
+Breakpoint 3: where = com_kwai_gif`___lldb_unnamed_symbol36$$com_kwai_gif, address = 0x000000010001ba94
+```
+
+
+
+#### New dumpdecrypted 2019/09/22
+
+dump macho image in lldb
+
+```
+(lldb) dumpdecrypted
+[+] Dumping WeChat
+[+] detected 64bit ARM binary in memory.
+[+] offset to cryptid found: @0x100018d48(from 0x100018000) = d48
+[+] Found encrypted data at address 00004000 of length 101662720 bytes - type 1.
+[+] Opening /private/var/containers/Bundle/Application/86E712C8-84CA-49AF-B2EA-01C37395A746/WeChat.app/WeChat for reading.
+[+] Reading header
+[+] Detecting header type
+[+] Executable is a plain MACH-O image
+[+] Opening /var/mobile/Containers/Data/Application/9649276C-C413-4916-B5AB-AE13C8D7B652/Documents/WeChat.decrypted for writing.
+[+] Copying the not encrypted start of the file
+[+] Dumping the decrypted data into the file
+[+] Copying the not encrypted remainder of the file
+[+] Setting the LC_ENCRYPTION_INFO->cryptid to 0 at offset d48
+[+] Closing original file
+[+] Closing dump file
+[*] This mach-o file decrypted done.
+
+Developed By xia0@2019
+```
+
+##### update dumpdecrypted 2019/09/27
+
+can dump all images in app dir
+
+```
+(lldb) dumpdecrypted
+[*] start dump image:/var/containers/Bundle/Application/701B4574-1606-41F3-B0DB-92D34F92E886/com_kwai_gif.app/com_kwai_gif
+
+[+] Dumping com_kwai_gif
+[+] detected 64bit ARM binary in memory.
+[+] offset to cryptid found: @0x100014980(from 0x100014000) = 980
+[+] Found encrypted data at address 00004000 of length 16384 bytes - type 1.
+[+] Opening /private/var/containers/Bundle/Application/701B4574-1606-41F3-B0DB-92D34F92E886/com_kwai_gif.app/com_kwai_gif for reading.
+[+] Reading header
+[+] Detecting header type
+[+] Executable is a plain MACH-O image
+[+] Opening /var/mobile/Containers/Data/Application/23C75F90-C42D-4F43-83D9-5DCCA36FE2D5/Documents/com_kwai_gif.decrypted for writing.
+[+] Copying the not encrypted start of the file
+[+] Dumping the decrypted data into the file
+[+] Copying the not encrypted remainder of the file
+[+] Setting the LC_ENCRYPTION_INFO->cryptid to 0 at offset 980
+[+] Closing original file
+[+] Closing dump file
+[*] This mach-o file decrypted done.
+[+] dump macho file at:/var/mobile/Containers/Data/Application/23C75F90-C42D-4F43-83D9-5DCCA36FE2D5/Documents/com_kwai_gif.decrypted
+
+
+[*] start dump image:/private/var/containers/Bundle/Application/701B4574-1606-41F3-B0DB-92D34F92E886/com_kwai_gif.app/Frameworks/gifIMFramework.framework/gifIMFramework
+
+[+] Dumping gifIMFramework
+[+] detected 64bit ARM binary in memory.
+[+] offset to cryptid found: @0x100064bd0(from 0x100064000) = bd0
+[+] Found encrypted data at address 00004000 of length 2752512 bytes - type 1.
+[+] Opening /private/var/containers/Bundle/Application/701B4574-1606-41F3-B0DB-92D34F92E886/com_kwai_gif.app/Frameworks/gifIMFramework.framework/gifIMFramework for reading.
+[+] Reading header
+[+] Detecting header type
+[+] Executable is a plain MACH-O image
+[+] Opening /var/mobile/Containers/Data/Application/23C75F90-C42D-4F43-83D9-5DCCA36FE2D5/Documents/gifIMFramework.decrypted for writing.
+[+] Copying the not encrypted start of the file
+[+] Dumping the decrypted data into the file
+[+] Copying the not encrypted remainder of the file
+[+] Setting the LC_ENCRYPTION_INFO->cryptid to 0 at offset bd0
+[+] Closing original file
+[+] Closing dump file
+[*] This mach-o file decrypted done.
+[+] dump macho file at:/var/mobile/Containers/Data/Application/23C75F90-C42D-4F43-83D9-5DCCA36FE2D5/Documents/gifIMFramework.decrypted
+
+...
+[*] Developed By xia0@2019
 ```
 
 
