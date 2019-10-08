@@ -213,7 +213,7 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
     }
     /* extract basename */
     tmp = (char*)strrchr(rpath, '/');
-    printf("\n\n");
+    //printf("\n\n");
     if (tmp == NULL) {
         printf("[-] Unexpected error with filename.\n");
         _exit(1);
