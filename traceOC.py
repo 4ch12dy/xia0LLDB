@@ -36,9 +36,11 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     target = exe_ctx.target
     thread = exe_ctx.thread
     
-    result.AppendMessage(str('[x] happy debugging~ kill antiDebug by xia0@2019'))
+    # result.AppendMessage(str('[x] happy debugging~ kill antiDebug by xia0@2019'))
 
-    ret = traceOC(debugger)
+
+    # ret = traceOC(debugger)
+    result.AppendMessage("traceOC command is still developing. please wait...\n")
     
     return
 
