@@ -22,6 +22,7 @@ Happy debugging~~
 - `ivars`  print all ivars of OC object (iOS Only)
 - `methods`print all methods of OC object (iOS Only)
 - `choose` get instance object of given class name, a lldb version of cycript's choose command
+- `debugme` hook ptrace and inlinehook svc ins done.
 - `dumpdecrypted` dump macho file in lldb
 
 ### TODO
