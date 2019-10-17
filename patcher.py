@@ -22,7 +22,7 @@ def __lldb_init_module(debugger, internal_dict):
     'command script add -f patcher.handle_command patcher -h "patch code in lldb"')
     print('========')
     print('[patcher]: patch code in lldb')
-    print('\tpatcher -a patch_addr')
+    print('\tpatcher -a patch_addr -i instrument -s instrument_count')
     print('\tmore usage, try "patcher -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
@@ -440,18 +440,18 @@ def generate_option_parser():
                     action="store",
                     default=None,
                     dest='patchAddress',
-                    help="patch code in lldb")
+                    help="need patch code address")
 
     parser.add_option("-i", "--instrument",
                 action="store",
                 default=None,
                 dest='patchInstrument',
-                help="patch instrument")
+                help="patch instrument type")
 
     parser.add_option("-s", "--size",
             action="store",
             default=None,
             dest='patchSize',
-            help="patch instrument size")
+            help="patch instrument count")
                         
     return parser
