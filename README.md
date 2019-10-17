@@ -24,6 +24,7 @@ Happy debugging~~
 - `choose` get instance object of given class name, a lldb version of cycript's choose command
 - `debugme` hook ptrace and inlinehook svc ins done.
 - `dumpdecrypted` dump macho file in lldb
+- `patcher` runtime patch instrument in lldb
 
 ### TODO
 
@@ -46,6 +47,7 @@ Happy debugging~~
 - [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
 - [2019/09/22] new **dumpdecrypted**: dump macho image in lldb
 - [2019/09/27] **dumpdecrypted** update: can dump all image in app dir 
+- [2019/10/17] new  **patcher** :runtime patch instrument in lldb
 
 
 
@@ -317,6 +319,32 @@ can dump all images in app dir
 
 ...
 [*] Developed By xia0@2019
+```
+
+#### New patcher 2019/10/17
+
+runtime patch instrument in lldb, now support int : nop, ret
+
+```
+(lldb) patcher -a 0x0000000100233a18 -i nop -s 8
+[*] start patch text at address:0x100233a18 size:8 to ins:"nop" and data:0x1f, 0x20, 0x03, 0xd5 
+[*] make ins data:
+{0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 ,0x1f, 0x20, 0x03, 0xd5 }
+[+] patch done
+[x] power by xia0@2019
+(lldb) x/12i 0x0000000100233a18
+    0x100233a18: 0xd503201f   nop    
+    0x100233a1c: 0xd503201f   nop    
+    0x100233a20: 0xd503201f   nop    
+    0x100233a24: 0xd503201f   nop    
+    0x100233a28: 0xd503201f   nop    
+    0x100233a2c: 0xd503201f   nop    
+    0x100233a30: 0xd503201f   nop    
+    0x100233a34: 0xd503201f   nop    
+    0x100233a38: 0xf941ac14   ldr    x20, [x0, #0x358]
+    0x100233a3c: 0xf9419c15   ldr    x21, [x0, #0x338]
+    0x100233a40: 0xf941a400   ldr    x0, [x0, #0x348]
+    0x100233a44: 0xf9400008   ldr    x8, [x0]
 ```
 
 
