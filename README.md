@@ -323,7 +323,7 @@ can dump all images in app dir
 
 #### New patcher 2019/10/17
 
-runtime patch instrument in lldb, now support int : nop, ret
+runtime patch instrument in lldb, now support instrument : nop, ret
 
 ```
 (lldb) patcher -a 0x0000000100233a18 -i nop -s 8
