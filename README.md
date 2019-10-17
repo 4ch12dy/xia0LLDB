@@ -2,6 +2,16 @@
 
 [中文版README](./README-zh.md)
 
+### Warning
+
+由于mac新系统Catalina中的lldb默认为python3解释器，所以xia0LLDB导入的时候会报错，可以通过以下修改lldb的Python解释器版本
+
+```bash
+defaults write com.apple.dt.lldb DefaultPythonVersion 2
+```
+
+感谢xqwang@wxq491216提供的解决方案，有时间的话我会尽快将项目移植到Python3版本
+
 ### Install 
 
 `git clone xia0LLDB_git_project `
