@@ -2,7 +2,17 @@
 
 [中文版README](./README-zh.md)
 
-### Warning
+### Warning(注意)
+
+There is a problem that lldb import xia0LLDB  in last macOS Catalina, because the last macOS's lldb default use python3. Here is a way to change it to python2
+
+```
+defaults write com.apple.dt.lldb DefaultPythonVersion 2
+```
+
+thanks to xqwang@wxq491216 provide this solution.  I will update xia0LLDB with python3 soon.
+
+
 
 由于mac新系统Catalina中的lldb默认为python3解释器，所以xia0LLDB导入的时候会报错，可以通过以下修改lldb的Python解释器版本
 
