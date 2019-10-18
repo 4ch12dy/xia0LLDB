@@ -1,6 +1,8 @@
 ## xia0's lldb python script (开发中)
 
-[English README](./README.md)
+[English README](../README.md)
+
+> 不推荐看中文的文档，除了安装以外，关于命令详情建议看英文版。中文版会比英文版更新慢很多
 
 ### 安装
 

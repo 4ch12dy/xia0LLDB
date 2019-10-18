@@ -1,6 +1,6 @@
-## xia0's lldb python script (Progressing)
+## xia0LLDB:xia0 LLDB Python Script
 
-[中文版README](./README-zh.md)
+[中文版README](./resource/README-zh.md) : it is deprecated
 
 ### Warning(注意)
 
@@ -34,147 +34,130 @@ Happy debugging~~
 
 ### Commands
 
-- `pcc`  is alias of  `process connect connect://127.0.0.1:1234 `
-- `xbr   `  set breakpoint at OC class method although strip symbol like:`xbr "-[yourClass yourMethod]"`
-- `sbt` the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
-- `xutil` this command has some useful tools(maybe fixable)
-- `info` very useful command to get info of address/function/module and so on
-- `ivars`  print all ivars of OC object (iOS Only)
-- `methods`print all methods of OC object (iOS Only)
-- `choose` get instance object of given class name, a lldb version of cycript's choose command
-- `debugme` hook ptrace and inlinehook svc ins done.
-- `dumpdecrypted` dump macho file in lldb
-- `patcher` runtime patch instrument in lldb
+#### pcc
 
-### TODO
+it is just alias of  `process connect connect://127.0.0.1:1234`
 
-- Anti-anti-debug：bypass anti debug in lldb （done at 2019/09/11）
-- OCHOOK：hook ObjectC function in lldb
-- NetworkLog：minitor network info
-- UI Debug：some useful command for UI debug
-- xbr: set breakpoint at address of methods of class（done at 2019/08/11）
-- traceOC: trace ObjectC call by inlinehook msg_send stub code
-- ...
+#### ivars
 
-### Update
-
-- [2019/07/04] Update for **sbt -x / xutil**  :  xutil cmd and sbt -x to disable color output in Xcode
-- [2019/07/21] Update for  **choose**  : lldb's choose command version of cycript's choose command
-- [2019/08/07] Fix critical bugs in **choose**  : Fix critical bugs
-- [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
-- [2019/08/13] New **debugme**: kill anti debug in lldb
-- [2019/08/20] New **info**:  get info of address/function/module and so on
-- [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
-- [2019/09/22] new **dumpdecrypted**: dump macho image in lldb
-- [2019/09/27] **dumpdecrypted** update: can dump all image in app dir 
-- [2019/10/17] new  **patcher** :runtime patch instrument in lldb
-
-
-
-#### Update for sbt -x 2019/07/04
-
-disable color output for Xcode terminal not support color output.
-
-**sbt**
+print all ivars of OC object (iOS Only)
 
 ```
-Usage: sbt -f block-json-file-path
-
-Options:
-  -h, --help            show this help message and exit
-  -f FILE, --file=FILE  special the block json file
-  -x, --XcodeNoColor    disable color output for Xcode
-  -r, --reset           reset block file to None
+(lldb) ivars 0x2835c4d00
+<CContactMgr: 0x2835c4d00>:
+in CContactMgr:
+	m_oLock (NSRecursiveLock*): <NSRecursiveLock: 0x2830aaca0>
+	m_uiLoadedType (unsigned int): 0
+	m_oContactDB (CContactDB*): <CContactDB: 0x2819b07e0>
+	m_oNewContactDB (NewContactDB*): <NewContactDB: 0x28156b7e0>
+	m_oContactOPLog (CContactOPLog*): <CContactOPLog: 0x2819b07f0>
+	m_openImContactMgr (OpenImContactMgr*): <OpenImContactMgr: 0x281bc07a0>
+	m_dicRemark (NSMutableDictionary*): <__NSDictionaryM: 0x281bc0a00>
+	m_dicLastAccessTime (NSMutableDictionary*): <__NSDictionaryM: 0x281bc0a60>
+	m_dicContacts (NSMutableDictionary*): <__NSDictionaryM: 0x281bc09e0>
+...
 ```
 
-**xutil**
+####methods
+
+print all methods of OC object (iOS Only)
 
 ```
-(lldb) xutil -h
-Usage: xutil [options] args
-
-Options:
-  -h, --help            show this help message and exit
-  -b MAINMODULEADDRESS, --breakpointAtMainModule=MAINMODULEADDRESS
-                        set a breakpoint at main module of given address
-  -s SILDEMODULE, --slide=SILDEMODULE
-                        get slide of given module
-  -l LOADMODULE, --load=LOADMODULE
-                        load a macho file
+(lldb) methods CContactMgr
+<CContactMgr: 0x1071caa28>:
+in CContactMgr:
+	Properties:
+		@property (readonly) unsigned long hash;
+		@property (readonly) Class superclass;
+		@property (readonly, copy) NSString* description;
+		@property (readonly, copy) NSString* debugDescription;
+	Instance Methods:
+		- (void) MessageReturn:(id)arg1 Event:(unsigned int)arg2; (0x1005cb338)
+		- (id) getContactByName:(id)arg1; (0x1000f4e74)
+		- (void) OnGetNewXmlMsg:(id)arg1 Type:(id)arg2 MsgWrap:(id)arg3; (0x1001de380)
+		- (void) onServiceReloadData; (0x102d10934)
+...
 ```
 
-- `xutil -b mainModuleAddress`: auto set breakpoint of address on main image (auto add the main image slide)
+#### freshxlldb
 
-  ```
-  (lldb) xutil -b 0x0000000100009b60
-  Breakpoint 2: where = choose`-[ViewController onClick:] at ViewController.m:53, address = 0x000000010001db60
-  ```
+Re import xia0LLDB from lldbinit
 
-- `xutil -s moduleName`: get silde of given module name
+#### sbt [2018/08/04]
 
-  ```
-  (lldb) xutil -s choose
-  Module:/var/containers/Bundle/Application/2E718F3A-CCBF-4251-9BB6-BBF57267CABB/choose.app/choose
-  Silde:0x14000
-  ```
-
-- `xutil -l machoFilePath`: load the macho file like dylib in the process
-
-  ```
-  (lldb) xutil -l /Library/MobileSubstrate/DynamicLibraries/test.dylib
-  Success
-  ```
-
-  
-
-#### Update for choose 2019/07/21
-
-##### choose
-
-lldb's choose command version of cycript's choose command, test on iPhone6P in iOS10. **enjoy~**
+the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
 
 ```
-(lldb) choose
-[usage] choose className
-
-(lldb) choose AppDelegate
-<__NSArrayM 0x170054370>(
-<AppDelegate: 0x17403e840>
-)
-
-(lldb) choose ViewController
-<__NSArrayM 0x174054a90>(
-<ViewController: 0x109e10550>
-)
+// also you can spcail -f block_json_file to restore block symbol
+(lldb) sbt
+==========================================xia0LLDB=========================================
+  BlockSymbolFile    Not Set The Block Symbol Json File, Try 'sbt -f'
+===========================================================================================
+  frame #0: [file:0x100009740 mem:0x100fb1740] WeChat`-[MMServiceCenter getService:] + 0
+  frame #1: [file:0x100017cd4 mem:0x100fbfcd4] WeChat`+[SettingUtil getMainSetting] + 88
+  frame #2: [file:0x10004eef0 mem:0x100ff6ef0] WeChat`-[CDownloadVoiceMgr TimerCheckDownloadQueue] + 44
+  frame #3: [file:0x1800a3604 mem:0x1ccb33604] libobjc.A.dylib`-[NSObject performSelector:withObject:] + 68 
+  frame #4: [file:0x10002e92c mem:0x100fd692c] WeChat`-[MMNoRetainTimerTarget onNoRetainTimer:] + 84
+  frame #5: [file:0x1819750bc mem:0x1ce4050bc] Foundation`__NSFireTimer + 88 
+  frame #6: [file:0x180e3d0a4 mem:0x1cd8cd0a4] CoreFoundation`__CFRUNLOOP_IS_CALLING_OUT_TO_A_TIMER_CALLBACK_FUNCTION__ + 32 
+  frame #7: [file:0x180e3cdd0 mem:0x1cd8ccdd0] CoreFoundation`__CFRunLoopDoTimer + 884 
+  frame #8: [file:0x180e3c5c4 mem:0x1cd8cc5c4] CoreFoundation`__CFRunLoopDoTimers + 252 
+  frame #9: [file:0x180e37284 mem:0x1cd8c7284] CoreFoundation`__CFRunLoopRun + 1832 
+  frame #10: [file:0x180e36844 mem:0x1cd8c6844] CoreFoundation`CFRunLoopRunSpecific + 452 
+  frame #11: [file:0x1830e5be8 mem:0x1cfb75be8] GraphicsServices`GSEventRunModal + 104 
+  frame #12: [file:0x1ae78431c mem:0x1fb21431c] UIKitCore`UIApplicationMain + 216 
+  frame #13: [file:0x10022ee88 mem:0x1011d6e88] WeChat`main + 556
+  frame #14: [file:0x1808ec020 mem:0x1cd37c020] libdyld.dylib`start + 4 
 ```
 
-一些解释：
+#### choose [2019/07/21]
 
-关于那两个计算公式的解释：iOS的malloc分配内存的时候会有tiny和small两种region。其中tiny以16B为quantum，small以512B为quantum。并且tiny在32位、64位机器上size分别为496B和1008B。所以，needed <= boundary是在检查分配内存是否小于tiny的size。(needed + 15) / 16 * 16 != size)主要是检查分配大小needed是否为16的倍数。更多关于苹果堆设计可以看我分析的一遍文章：
-
-[http://4ch12dy.site/2019/04/01/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3macos-heap/](http://4ch12dy.site/2019/04/01/深入理解macos-heap/深入理解macos-heap/)
-
-
-
-~~Tips: It seemdifferent of heap layout by malloc in iOS12, So choose cmd maybe has some bugs~~
-
-~~说明:iOS12可能是malloc的布局发生了一些变化，导致choose的时候可能出现bug，后面有时间在适配一下。~~
-
-是我自己代码写得有问题导致得….其他设备或者系统如果有问题的话，欢迎issue 或pr
-
-
-
-#### Fix critical bugs in choose 2019/08/07
-
-fix need check and something error when choose NSString
-
-
-
-#### Update for xbr 2019/08/11
-
-`xbr className` can set breakpoint at adresses of all methods of given class name.
+get instance object of given class name, a lldb version of cycript's choose command
 
 ```
+(lldb) choose CContactMgr
+====>xia0LLDB NSArray Address: 0x2815a8540	size: 0x1
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V 
+======>xia0LLDB Object Address: 0x2835c4d00
+<CContactMgr: 0x2835c4d00>
+```
+
+#### xbr [2019/08/11]
+
+xia0 super set breakpoint command:set breakpoint at OC class method although strip symbol and so on
+
+```
+// set breakpoint at oc methold even symbol stripped
+(lldb) xbr "-[MMServiceCenter getService:]"
+[*] className:MMServiceCenter methodName:getService:
+[+] found class address:0x10803d208
+[+] found selector address:0x106425b4c
+[+] found method address:0x100fb1740
+Breakpoint 1: where = WeChat`___lldb_unnamed_symbol50$$WeChat, address = 0x0000000100fb1740
+
+// set breakpoint at address of ida, auto add slide
+(lldb) xbr 0x100009740
+[*] you not specail the module, default is main module
+[*] ida's address:0x100009740 main module slide:0xfa8000 target breakpoint address:0x100fb1740
+Breakpoint 3: where = WeChat`___lldb_unnamed_symbol50$$WeChat, address = 0x0000000100fb1740
+
+// set breakpoint at memory address
+(lldb) xbr -a 0x100fb1740
+[*] breakpoint at address:0x100fb1740
+Breakpoint 4: where = WeChat`___lldb_unnamed_symbol50$$WeChat, address = 0x0000000100fb1740
+
+// set breakpoint at main function
+(lldb) xbr -E main
+[*] breakpoint at main function:0x1011d6c5c
+Breakpoint 5: where = WeChat`___lldb_unnamed_symbol7390$$WeChat, address = 0x00000001011d6c5c
+
+// set breakpoint at first mod_init function
+(lldb) xbr -E init
+[*] breakpoint at mod int first function:0x1044553dc
+Breakpoint 6: where = WeChat`___lldb_unnamed_symbol143513$$WeChat, address = 0x00000001044553dc
+
+//  set breakpoint at adresses of all methods of given class name
 (lldb) xbr UPLivePlayerVC
 Breakpoint 1: where = TestPaly`-[UPLivePlayerVC progressSliderSeekTime:] at UPLivePlayerVC.m:205, address = 0x0000000102dc134c
 Breakpoint 2: where = TestPaly`-[UPLivePlayerVC progressSliderTouchDown:] at UPLivePlayerVC.m:197, address = 0x0000000102dc1184
@@ -186,38 +169,9 @@ Breakpoint 47: where = TestPaly`-[UPLivePlayerVC pause] at UPLivePlayerVC.m:132,
 Set 47 breakpoints of UPLivePlayerVC
 ```
 
-usage is above. Enjoy~
+#### debugme [2019/08/13]
 
-#### New debugme 2019/08/13
-
-Base single instruction patch to anti-anti-debug in lldb 
-
-```
-(lldb) debugme
-Kill antiDebug by xia0:
-[*] target address: 6501024128 and offset: 384
-[*] mmap new page: 4572217344 success! 
-[+] vm_copy success!
-[+] mach_vm_write success!
-[*] set new page back to r-x success!
-[*] vm_region_recurse_64 success!
-[*] get page info success!
-[+] remap success!
-[*] clear cache success!
-[+] all done! happy debug~
-```
-
-paper see：http://4ch12dy.site/2019/08/12/xia0lldb-anti-anti-debug/xia0lldb-anti-anti-debug/
-
-##### fix iOS11/12 vm_remap bug 2019/09/04
-
-This bug is about wrong memory page size. I use the 4K on 32bit device instead of 16K on 64bit device.
-
-Fxxk it!!! confuse me long time!
-
-##### inline hook svc done 2019/09/11
-
-now debugme can hook ptrace and inlinehook svc to kill anti debug. it is so strong ever!!!
+bypass anti-debug: can hook ptrace and inlinehook svc to kill anti debug. it is so strong ever!!!
 
 ```
 [*] start patch ptrace funtion to bypass antiDebug
@@ -234,65 +188,41 @@ now debugme can hook ptrace and inlinehook svc to kill anti debug. it is so stro
 [x] happy debugging~ kill antiDebug by xia0@2019
 ```
 
-#### New info 2019/08/20
 
-get info of address/function/module and so on
+#### info [2019/08/20]
 
-```
-usage: info  [-m moduleName, -a address, -f funtionName, -u UserDefaults]
-```
-
-
-
-#### Update xbr 2019/09/22
-
-add new options :  set breakpoint at main/init function and more set br utils
-
-##### set br at main/init func
-
-parse macho image in memory and found `LC_MAIN` and `__DATA,__mod_init_func`
+very useful command to get info of address/function/module and so on
 
 ```
-(lldb) xbr -E init
-[*] breakpoint at mod int first function:0x1034c7db8
-Breakpoint 2: where = WeChat ___lldb_unnamed_symbol143521$$WeChat, address = 0x00000001034c7db8
+// get info of image
+(lldb) info -m WeChat
+=======
+Module Path : /var/containers/Bundle/Application/747A9704-6252-45A9-AE55-59690DAD60BB/WeChat.app/WeChat
+Module Silde: 0x7d4000
+Module base : 0x1007d4000
+=======
 
-(lldb) xbr -E main
-[*] breakpoint at main function:0x10001ba94
-Breakpoint 3: where = com_kwai_gif`___lldb_unnamed_symbol36$$com_kwai_gif, address = 0x000000010001ba94
+// get info of address of function
+(lldb) info -a 0x00000001cd4ca3b8
+Module Path: /usr/lib/system/libsystem_kernel.dylib
+Module base: 0x1cd4a8000
+Symbol name: __getpid
+Symbol addr: 0x1cd4ca3b8
+
+// get info of function
+(lldb) info -f getpid
+Func   name: getpid
+Func   addr: 0x1cd4ca3b8
+Module Path: /usr/lib/system/libsystem_kernel.dylib
+Module base: 0x1cd4a8000
+Symbol name: __getpid
+Symbol addr: 0x1cd4ca3b8
 ```
 
 
-
-#### New dumpdecrypted 2019/09/22
+#### dumpdecrypted [2019/09/22]
 
 dump macho image in lldb
-
-```
-(lldb) dumpdecrypted
-[+] Dumping WeChat
-[+] detected 64bit ARM binary in memory.
-[+] offset to cryptid found: @0x100018d48(from 0x100018000) = d48
-[+] Found encrypted data at address 00004000 of length 101662720 bytes - type 1.
-[+] Opening /private/var/containers/Bundle/Application/86E712C8-84CA-49AF-B2EA-01C37395A746/WeChat.app/WeChat for reading.
-[+] Reading header
-[+] Detecting header type
-[+] Executable is a plain MACH-O image
-[+] Opening /var/mobile/Containers/Data/Application/9649276C-C413-4916-B5AB-AE13C8D7B652/Documents/WeChat.decrypted for writing.
-[+] Copying the not encrypted start of the file
-[+] Dumping the decrypted data into the file
-[+] Copying the not encrypted remainder of the file
-[+] Setting the LC_ENCRYPTION_INFO->cryptid to 0 at offset d48
-[+] Closing original file
-[+] Closing dump file
-[*] This mach-o file decrypted done.
-
-Developed By xia0@2019
-```
-
-##### update dumpdecrypted 2019/09/27
-
-can dump all images in app dir
 
 ```
 (lldb) dumpdecrypted
@@ -341,11 +271,12 @@ can dump all images in app dir
 [*] Developed By xia0@2019
 ```
 
-#### New patcher 2019/10/17
+#### patcher [2019/10/17] 
 
-runtime patch instrument in lldb, now support instrument : nop, ret
+runtime patch instrument in lldb
 
 ```
+// -a patch_address -i patch_instrument -s instrument_count
 (lldb) patcher -a 0x0000000100233a18 -i nop -s 8
 [*] start patch text at address:0x100233a18 size:8 to ins:"nop" and data:0x1f, 0x20, 0x03, 0xd5 
 [*] make ins data:
@@ -369,25 +300,39 @@ runtime patch instrument in lldb, now support instrument : nop, ret
 
 
 
-### Screenshot
+### TODO
 
-**bt**
+- Anti-anti-debug：bypass anti debug in lldb （done at 2019/09/11）
+- OCHOOK：hook ObjectC function in lldb
+- NetworkLog：minitor network info
+- UI Debug：some useful command for UI debug
+- xbr: set breakpoint at address of methods of class（done at 2019/08/11）
+- traceOC: trace ObjectC call by inlinehook msg_send stub code
+- ...
 
-![orig_bt](./resource/orig_bt.png)
+### Update
 
-**sbt**
+- [2019/07/04] Update for **sbt -x / xutil**  :  xutil cmd and sbt -x to disable color output in Xcode
 
-![sbt-noblockfile](./resource/sbt-noblockfile.png)
+- [2019/07/21] Update for  **choose**  : lldb's choose command version of cycript's choose command
 
-**sbt -f block_json_file**
+- [2019/08/07] Fix critical bugs in **choose**  : Fix critical bugs
 
-![sbt-blockfile](./resource/sbt-blockfile.png)
+- [2019/08/11] Update for **xbr** : `xbr className` can set breakpoint at adresses of all methods of class
 
-**debugme**
+- [2019/08/13] New **debugme**: kill anti debug in lldb
 
-![debugme](./resource/debugme.png)
+- [2019/08/20] New **info**:  get info of address/function/module and so on
 
+- [2019/09/11] **debugme** update: hook ptrace and inlinehook svc ins done.
 
+- [2019/09/22] new **dumpdecrypted**: dump macho image in lldb
+
+- [2019/09/27] **dumpdecrypted** update: can dump all image in app dir 
+
+- [2019/10/17] new  **patcher** :runtime patch instrument in lldb
+
+  
 
 ### Document
 
@@ -409,4 +354,3 @@ runtime patch instrument in lldb, now support instrument : nop, ret
   Apple lldb opensource about heap
 
 - [https://blog.0xbbc.com/2015/07/%e6%8a%bd%e7%a6%bbcycript%e7%9a%84choose%e5%8a%9f%e8%83%bd/](https://blog.0xbbc.com/2015/07/抽离cycript的choose功能/) 
-
