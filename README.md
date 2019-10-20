@@ -1,4 +1,4 @@
-## xia0LLDB:xia0 LLDB Python Script
+## xia0LLDB
 
 [中文版README](./resource/README-zh.md) : it is deprecated
 
