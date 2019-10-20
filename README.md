@@ -26,9 +26,7 @@ defaults write com.apple.dt.lldb DefaultPythonVersion 2
 
 `git clone xia0LLDB_git_project `
 
-`command script import git-xia0LLDB-path/xlldb.py` in lldb or `.lldbinit`
-
-you can run `install.sh` auto add command script import git-xia0LLDB-path/xlldb.py to your `.lldbinit`
+just run `install.sh` 
 
 Happy debugging~~
 
