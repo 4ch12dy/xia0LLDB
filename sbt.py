@@ -98,12 +98,14 @@ def symbolishStackTraceFrame(debugger,target, thread):
             # offset
             start_addr = f.GetSymbol().GetStartAddress().GetFileAddress()
             symbol_offset = file_addr - start_addr
+            modulePath = str(f.addr.module.file)
+
             # isMainModuleFromAddress? findname : symbol name
             if isMainModuleFromAddress(target,debugger,load_addr):
                 if idx + 2 == len(thread.frames):
                     metholdName = 'main + ' + str(symbol_offset)
                 else:
-                    command_script = findSymbolFromAddressScript(load_addr)
+                    command_script = findSymbolFromAddressScript(load_addr, modulePath)
                     one = exeScript(debugger,command_script)
                     # is set the block file path
                     if BLOCK_JSON_FILE and len(BLOCK_JSON_FILE) > 0:
@@ -222,6 +224,7 @@ def isMainModuleFromAddress(target,debugger,address):
     #  get moduleName of address
     addr = target.ResolveLoadAddress(address)
     moduleName = addr.module.file.basename
+    modulePath = str(addr.module.file)
     #  get executable path
     getExecutablePathScript = r''' 
     const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
@@ -229,14 +232,52 @@ def isMainModuleFromAddress(target,debugger,address):
     '''
     # is in executable path?
     path = exeScript(debugger, getExecutablePathScript)
+    appDir = os.path.dirname(path.strip()[1:-1])
+
 
     if not moduleName or not str(path):
+        return False
+
+    if appDir in modulePath:
+        return True
+
+    else:
         return False
 
     if moduleName in str(path):
         return True
     else:
         return False
+
+def getImageInfoFromAddress(debugger, address):
+    command_script = 'void * targetAddr = (void*)' + address + ';' 
+    command_script += r'''
+    NSMutableString* retStr = [NSMutableString string];
+
+    typedef struct dl_info {
+        const char      *dli_fname;     /* Pathname of shared object */
+        void            *dli_fbase;     /* Base address of shared object */
+        const char      *dli_sname;     /* Name of nearest symbol */
+        void            *dli_saddr;     /* Address of nearest symbol */
+    } Dl_info;
+
+    Dl_info dl_info;
+
+    dladdr(targetAddr, &dl_info);
+
+    char* module_path = (char*)dl_info.dli_fname;
+    uintptr_t module_base = (uintptr_t)dl_info.dli_fbase;
+    char* symbol_name = (char*)dl_info.dli_sname;
+    uintptr_t symbol_addr = (uintptr_t)dl_info.dli_saddr;
+
+    [retStr appendString:@(module_path)];
+    [retStr appendString:@","];
+    [retStr appendString:(id)[@(module_base) stringValue]];
+    
+    retStr
+    '''
+    retStr = exeScript(debugger, command_script)
+    return hexIntInStr(retStr)
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()
@@ -250,17 +291,16 @@ def exeScript(debugger,command_script):
     response = res.GetOutput()
     return response
 
-def findSymbolFromAddressScript(frame_addr):
-
+def findSymbolFromAddressScript(frame_addr, module_path):
     command_script = 'uintptr_t frame_addr =' + str(frame_addr) + ';'
-
+    command_script += 'const char *path =\"' + str(module_path) + '\";'
     command_script += r'''
     
     // NSMutableDictionary *retdict = [NSMutableDictionary dictionary];
     // NSMutableArray *retArr = [NSMutableArray array];
 
     unsigned int c_size = 0;
-    const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
+    //const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
     const char **allClasses = (const char **)objc_copyClassNamesForImage(path, &c_size);
     
     NSString *c_size_str = [@(c_size) stringValue];
