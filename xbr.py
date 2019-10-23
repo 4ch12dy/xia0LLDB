@@ -150,6 +150,18 @@ def exeScript(debugger,command_script):
     response = res.GetOutput()
     return response
 
+def exeCommand(debugger, command):
+    res = lldb.SBCommandReturnObject()
+    interpreter = debugger.GetCommandInterpreter()
+    interpreter.HandleCommand(command, res)
+
+    if not res.HasResult():
+        # something error
+        return res.GetError()
+            
+    response = res.GetOutput()
+    return response
+
 def getAllMethodAddressOfClass(debugger, classname):
 
     command_script = 'const char* className = "' + classname + '";' 
@@ -407,8 +419,23 @@ def getMachOEntryOffset(debugger):
     retStr = exeScript(debugger, command_script)
     return retStr
 
+def getMainImagePath(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+
+    // const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
+    id bundle = objc_msgSend((Class)objc_getClass("NSBundle"), @selector(mainBundle));
+    id exePath = objc_msgSend((id)bundle, @selector(executablePath));
+    const char *path  = (char *)objc_msgSend((id)exePath, @selector(UTF8String));
+    
+    path
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
+
 def getProcessModuleSlide(debugger, modulePath):
-    command_script = r'''
+    command_script = '@import Foundation;' 
+    command_script += r'''
     uint32_t count = (uint32_t)_dyld_image_count();
     NSMutableString* retStr = [NSMutableString string];
     uint32_t idx = 0;
@@ -500,12 +527,34 @@ def xbr(debugger, command, result, dict):
             targetAddr_int = int(targetAddr, 16)
         else:
             targetAddr_int = int(targetAddr, 10)
-        
-        moduleSlide = getProcessModuleSlide(debugger, modulePath)
-        moduleSlide = int(moduleSlide, 10)
+
+        if options.hacker:
+            if modulePath:
+                targetImagePath = modulePath
+            else:               
+                mainImagePath = getMainImagePath(debugger)
+                mainImagePath = mainImagePath.strip()[1:-1]
+                targetImagePath = mainImagePath
+
+            ret = exeCommand(debugger, "im li -o -f")
+            pattern = '0x.*?' + targetImagePath.replace("\"", "")
+            match = re.search(pattern, ret) # TODO: more strict
+            if match:
+                found = match.group(0)
+            else:
+                print("[-] not found image:"+targetImagePath)
+                return
+            moduleSlide = found.split()[0]
+            print("[*] use \"im li -o -f\" cmd to get image slide:"+moduleSlide)
+            moduleSlide = int(moduleSlide, 16)
+        else:
+
+            moduleSlide = getProcessModuleSlide(debugger, modulePath)
+            moduleSlide = int(moduleSlide, 10)
+            
         brAddr = moduleSlide + targetAddr_int
 
-        print("[*] ida's address:{} main module slide:{} target breakpoint address:{}".format(ILOG(hex(targetAddr_int)), ILOG(hex(moduleSlide)), ILOG(hex(brAddr))))
+        print("[*] ida's address:{} module slide:{} target breakpoint address:{}".format(ILOG(hex(targetAddr_int)), ILOG(hex(moduleSlide)), ILOG(hex(brAddr))))
         
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % brAddr)
         return
@@ -570,5 +619,11 @@ def generate_option_parser():
             default=None,
             dest="entryAddress",
             help="set a breakpoint at entry address/main")
+
+    parser.add_option("-H", "--hacker",
+        action="store_true",
+        default=None,
+        dest="hacker",
+        help="use some hacker trick to run")
 
     return parser
