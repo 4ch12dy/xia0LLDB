@@ -354,6 +354,7 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
             if (r != eic->cryptsize) {
                 uint64_t flag = (uint64_t)(mh);
                 // printf("Error no.%d: %s\n", errno, strerror(errno));
+                printf("[-] read memory from:0x%lx size:%ld\n", mh + eic->cryptoff, eic->cryptsize);
                 printf("[-] Error writing file r=%lx offset=%lx size=%lx flag=%lx\n", r,eic->cryptoff, eic->cryptsize, flag);
                 return;
             }
