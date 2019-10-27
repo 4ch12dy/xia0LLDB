@@ -43,6 +43,8 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         patch_ins = options.patchInstrument
         # default instrument size is 1
         patch_size = 0x1
+        patch_ins = patch_ins.replace("\"", "")
+        patch_ins = patch_ins.replace("'", "")
 
         if options.patchSize:
             patch_size = int(options.patchSize)
@@ -378,8 +380,25 @@ def patch_code(debugger, addr, ins, count):
     retStr = exeScript(debugger, command_script)
     return hexIntInStr(retStr)
 
+def is_raw_data(data):
+    pattern = "\{\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*\}"
+    ret = re.match(pattern, data)
+
+    if not ret:
+        return False
+    return True
+
 def patcher(debugger, ins, addr, size):
+    if is_raw_data(ins):
+        print("[*] detect you manual set ins data:{}".format(ins))
+        print("[*] start patch text at address:{} size:{} to ins data:{}".format(hex(addr), size, ins))
+        patch_code(debugger, hex(addr), ins, size)
+        return "[x] power by xia0@2019"
+
     supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2'}
+    if not supportInsList.has_key(ins):
+        print("[-] patcher not support this ins type:{}".format(ins))
+        return "[x] power by xia0@2019"
 
     print("[*] start patch text at address:{} size:{} to ins:\"{}\" and data:{}".format(hex(addr), size, ins, supportInsList[ins]))
     
