@@ -51,7 +51,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
 
         result.AppendMessage(str(ret))
     else:
-        result.AppendMessage("check it !")
+        result.AppendMessage("[-] args error, check it !")
 
     return
 
@@ -392,7 +392,7 @@ def patcher(debugger, ins, addr, size):
         ins_data += supportInsList[ins]
         if i != size - 1:
             ins_data += ","
-            
+
     build_ins_data = "{" + ins_data + "}"
 
     print("[*] make ins data:\n{}".format(build_ins_data))
