@@ -379,7 +379,7 @@ def patch_code(debugger, addr, ins, count):
     return hexIntInStr(retStr)
 
 def patcher(debugger, ins, addr, size):
-    supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6'}
+    supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2'}
 
     print("[*] start patch text at address:{} size:{} to ins:\"{}\" and data:{}".format(hex(addr), size, ins, supportInsList[ins]))
     
@@ -392,7 +392,7 @@ def patcher(debugger, ins, addr, size):
         ins_data += supportInsList[ins]
         if i != size - 1:
             ins_data += ","
-
+            
     build_ins_data = "{" + ins_data + "}"
 
     print("[*] make ins data:\n{}".format(build_ins_data))
