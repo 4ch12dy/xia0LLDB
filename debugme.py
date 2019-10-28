@@ -439,23 +439,58 @@ def xia0Hook(debugger, svcAddr):
     void* copy_from_addr = ( void*)(target_addr - copy_size);
     memcpy((void *)(new_page), copy_from_addr, copy_size);
 
-    /*
-     cmp x16, #0x1a
-     b.ne loc_not_ptrace_svc_jmp
-     ldr x17, #0x8
-     br x17
-     orig_svc_next_addr_1
-     orig_svc_next_addr_2
-     ldr x17, #0x8
-     br x17
-     orig_svc_addr_1
-     orig_svc_addr_2
-     */
-
     uint64_t orig_svc_addr = (uint64_t)target_addr;
     uint64_t orig_svc_next_addr = (uint64_t)(target_addr+1*4);
-    uint8_t check_jmp_data[] = {0x1f, 0x6a, 0x00, 0xf1,0xa1, 0x00, 0x00, 0x54,0x51, 0x00, 0x00, 0x58, 0x20, 0x02, 0x1f, 0xd6, (uint8_t)((orig_svc_next_addr&0xff)), (uint8_t)((orig_svc_next_addr>>8*1)&0xff),  (uint8_t)((orig_svc_next_addr>>8*2)&0xff),  (uint8_t)((orig_svc_next_addr>>8*3)&0xff),  (uint8_t)((orig_svc_next_addr>>8*4)&0xff),  (uint8_t)((orig_svc_next_addr>>8*5)&0xff),  (uint8_t)((orig_svc_next_addr>>8*6)&0xff),  (uint8_t)((orig_svc_next_addr>>8*7)&0xff), 0x51, 0x00, 0x00, 0x58, 0x20, 0x02, 0x1f, 0xd6, (uint8_t)((orig_svc_addr&0xff)), (uint8_t)((orig_svc_addr>>8*1)&0xff),  (uint8_t)((orig_svc_addr>>8*2)&0xff),  (uint8_t)((orig_svc_addr>>8*3)&0xff),  (uint8_t)((orig_svc_addr>>8*4)&0xff),  (uint8_t)((orig_svc_addr>>8*5)&0xff),  (uint8_t)((orig_svc_addr>>8*6)&0xff), (uint8_t)((orig_svc_addr>>8*7)&0xff)};
-    int check_jmp_data_size = 10*4;
+
+    // just check x16
+    /*
+         cmp x16, #0x1a
+         b.ne loc_not_ptrace_svc_jmp
+         ldr x17, #0x8
+         br x17
+         orig_svc_next_addr_1
+         orig_svc_next_addr_2
+         ldr x17, #0x8
+         br x17
+         orig_svc_addr_1
+         orig_svc_addr_2
+     */
+
+    //uint8_t check_jmp_data[] = {0x1f, 0x6a, 0x00, 0xf1,0xa1, 0x00, 0x00, 0x54,0x51, 0x00, 0x00, 0x58, 0x20, 0x02, 0x1f, 0xd6, (uint8_t)((orig_svc_next_addr&0xff)), (uint8_t)((orig_svc_next_addr>>8*1)&0xff),  (uint8_t)((orig_svc_next_addr>>8*2)&0xff),  (uint8_t)((orig_svc_next_addr>>8*3)&0xff),  (uint8_t)((orig_svc_next_addr>>8*4)&0xff),  (uint8_t)((orig_svc_next_addr>>8*5)&0xff),  (uint8_t)((orig_svc_next_addr>>8*6)&0xff),  (uint8_t)((orig_svc_next_addr>>8*7)&0xff), 0x51, 0x00, 0x00, 0x58, 0x20, 0x02, 0x1f, 0xd6, (uint8_t)((orig_svc_addr&0xff)), (uint8_t)((orig_svc_addr>>8*1)&0xff),  (uint8_t)((orig_svc_addr>>8*2)&0xff),  (uint8_t)((orig_svc_addr>>8*3)&0xff),  (uint8_t)((orig_svc_addr>>8*4)&0xff),  (uint8_t)((orig_svc_addr>>8*5)&0xff),  (uint8_t)((orig_svc_addr>>8*6)&0xff), (uint8_t)((orig_svc_addr>>8*7)&0xff)};
+    //int check_jmp_data_size = 10*4;
+
+    // new check x16 and x0
+    /*  new check syscall()
+        cmp x16, #0x1a
+        b.ne loc_next_syscall_check_jmp     0xa1, 0x00, 0x00, 0x54
+        ldr x17, #0x8                    <------ loc_ptrace_handle_jmp
+        br x17
+        orig_svc_next_addr_1
+        orig_svc_next_addr_2
+        cmp x16, #0x0                     <------- loc_next_syscall_check_jmp
+        b.ne loc_not_ptrace_jmp             0x61, 0x00, 0x00, 0x54
+        cmp x0, #0x1a
+        b.e loc_ptrace_handle_jmp           0x20, 0xff, 0xff, 0x54
+        ldr x17, #0x8                    <------- loc_not_ptrace_jmp
+        br x17
+        orig_svc_addr_1
+        orig_svc_addr_2
+    */
+
+    uint8_t check_jmp_data[] = {0x1f, 0x6a, 0x00, 0xf1, \
+                                0xa1, 0x00, 0x00, 0x54, \
+                                0x51, 0x00, 0x00, 0x58, \
+                                0x20, 0x02, 0x1f, 0xd6, \
+                                (uint8_t)((orig_svc_next_addr&0xff)), (uint8_t)((orig_svc_next_addr>>8*1)&0xff),  (uint8_t)((orig_svc_next_addr>>8*2)&0xff),  (uint8_t)((orig_svc_next_addr>>8*3)&0xff),  (uint8_t)((orig_svc_next_addr>>8*4)&0xff),  (uint8_t)((orig_svc_next_addr>>8*5)&0xff),  (uint8_t)((orig_svc_next_addr>>8*6)&0xff),  (uint8_t)((orig_svc_next_addr>>8*7)&0xff), \
+                                0x1f, 0x02, 0x00, 0xf1, \
+                                0x61, 0x00, 0x00, 0x54, \
+                                0x1f, 0x68, 0x00, 0xf1, \
+                                0x20, 0xff, 0xff, 0x54, \
+                                0x51, 0x00, 0x00, 0x58, \
+                                0x20, 0x02, 0x1f, 0xd6, \
+                                (uint8_t)((orig_svc_addr&0xff)), (uint8_t)((orig_svc_addr>>8*1)&0xff),  (uint8_t)((orig_svc_addr>>8*2)&0xff),  (uint8_t)((orig_svc_addr>>8*3)&0xff),  (uint8_t)((orig_svc_addr>>8*4)&0xff),  (uint8_t)((orig_svc_addr>>8*5)&0xff),  (uint8_t)((orig_svc_addr>>8*6)&0xff), (uint8_t)((orig_svc_addr>>8*7)&0xff)};
+    int check_jmp_data_size = 14*4;
+
     memcpy((void *)((uint64_t)new_page+4*4), (void*)check_jmp_data, check_jmp_data_size);
 
     // 4.patch target address to jmp hook code
