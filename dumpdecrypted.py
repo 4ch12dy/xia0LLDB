@@ -36,7 +36,14 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     target = exe_ctx.target
     thread = exe_ctx.thread
     
-    ret = dumpdecrypted(debugger)
+    if options.modulePath and options.moduleIdx:
+        module_path = options.modulePath
+        module_idx = options.moduleIdx
+        print("[*] you manual set dump module idx:{} and path:{}".format(module_idx, module_path))
+        ret = dumpdecrypted(debugger, module_path, module_idx)
+    else:   
+        ret = dumpdecrypted(debugger)
+
     result.AppendMessage(str(ret))
             
     return 
@@ -410,26 +417,29 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
     return ret
 
 
-def dumpdecrypted(debugger):
+def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
     #dumpMachoToFile(debugger,)
-    mainImagePath = getMainImagePath(debugger)
-    appDir = os.path.dirname(mainImagePath)
+    if modulePath and moduleIdx:
+        print dumpMachoToFile(debugger, modulePath, moduleIdx)
+    else:
+        mainImagePath = getMainImagePath(debugger)
+        appDir = os.path.dirname(mainImagePath)
+        
+        appImagesStr = getAllImageOfApp(debugger, appDir)
+        
+        appImagesArr = appImagesStr.split("#")
+        
+        for imageInfo in appImagesArr:
+            if not imageInfo:
+                continue
 
-    appImagesStr = getAllImageOfApp(debugger, appDir)
+            info = imageInfo.split(",")
 
-    appImagesArr = appImagesStr.split("#")
-
-    for imageInfo in appImagesArr:
-        if not imageInfo:
-            continue
-
-        info = imageInfo.split(",")
-
-        if len(info) == 2:
-            print("[*] start dump image:" + info[1])
-            # print "idx:" + info[0]
-            # print "path:" + info[1]
-            print dumpMachoToFile(debugger, info[0], info[1])
+            if len(info) == 2:
+                print("[*] start dump image:" + info[1])
+                # print "idx:" + info[0]
+                # print "path:" + info[1]
+                print dumpMachoToFile(debugger, info[0], info[1])
 
     return "\n\n[*] Developed By xia0@2019"
 
@@ -455,5 +465,17 @@ def generateOptions():
 def generate_option_parser():
     usage = "usage: dumpdecrypted [options] args"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
+
+    parser.add_option("-m", "--modulePath",
+                action="store",
+                default=None,
+                dest="modulePath",
+                help="set the module path")
+
+    parser.add_option("-i", "--moduleIdx",
+            action="store",
+            default=None,
+            dest="moduleIdx",
+            help="set module index")
 
     return parser
