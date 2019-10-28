@@ -395,7 +395,7 @@ def patcher(debugger, ins, addr, size):
         patch_code(debugger, hex(addr), ins, size)
         return "[x] power by xia0@2019"
 
-    supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2'}
+    supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2', 'mov1':'0x20, 0x00, 0x80, 0xd2'}
     if not supportInsList.has_key(ins):
         print("[-] patcher not support this ins type:{}".format(ins))
         return "[x] power by xia0@2019"
