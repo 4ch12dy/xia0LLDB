@@ -38,8 +38,23 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     thread = exe_ctx.thread
 
 
-    if options.patchAddress and options.patchInstrument:
-        patch_addr = int(options.patchAddress, 16)
+    if options.patchInstrument:
+        if options.patchAddress:
+            patch_addr = int(options.patchAddress, 16)
+        else:
+            ret = exeCommand(debugger, "p/x $pc")
+            ret = ret.strip()
+            pattern = '0x[0-9a-f]+'
+            match = re.search(pattern, ret)
+            if match:
+                found = match.group(0)
+            else:
+                print("[-] not get address:"+ret)
+                return
+
+            print("[*] you not set patch address, default is current pc address:{}".format(found))
+            patch_addr = int(found, 16)
+        
         patch_ins = options.patchInstrument
         # default instrument size is 1
         patch_size = 0x1
@@ -56,6 +71,18 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         result.AppendMessage("[-] args error, check it !")
 
     return
+
+def exeCommand(debugger, command):
+    res = lldb.SBCommandReturnObject()
+    interpreter = debugger.GetCommandInterpreter()
+    interpreter.HandleCommand(command, res)
+
+    if not res.HasResult():
+        # something error
+        return res.GetError()
+            
+    response = res.GetOutput()
+    return response
 
 
 def getTextSegmentAddr(debugger):
