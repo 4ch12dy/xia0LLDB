@@ -420,7 +420,7 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
 def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
     #dumpMachoToFile(debugger,)
     if modulePath and moduleIdx:
-        print dumpMachoToFile(debugger, modulePath, moduleIdx)
+        print dumpMachoToFile(debugger, moduleIdx, modulePath)
     else:
         mainImagePath = getMainImagePath(debugger)
         appDir = os.path.dirname(mainImagePath)
@@ -436,7 +436,7 @@ def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
             info = imageInfo.split(",")
 
             if len(info) == 2:
-                print("[*] start dump image:" + info[1])
+                print("[*] start dump ["+ info[0] +"] image:" + info[1])
                 # print "idx:" + info[0]
                 # print "path:" + info[1]
                 print dumpMachoToFile(debugger, info[0], info[1])
