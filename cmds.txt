@@ -10,6 +10,12 @@ command alias rr register read $x0 $x1 $x2 $x3 $x4 $x5 $x6 $x7 $x8 $pc $lr $sp
 
 command regex pclass 's/(([0-9]|\$|\@|\[).*)/po [%1 class]/'
 
+command regex pbpaste -h "paste string to iOS device pasteboard" -s "pbpaste string_you_want" 's/(.+)/expression -F Foundation -O -- id obj = objc_msgSend((Class)objc_getClass("UIPasteboard"), @selector(generalPasteboard));id str = objc_msgSend((id)obj, @selector(setString:), @"%1"); str/'
+
+command regex pbcopy -h "get string from iOS device pasteboard" 's/(.*)/expression -F Foundation -O -- id obj = objc_msgSend((Class)objc_getClass("UIPasteboard"), @selector(generalPasteboard));id str = objc_msgSend((id)obj, @selector(string)); str/'
+
+command regex data 's/(.+)/mem read  `(void *)[$1 bytes]` -c `(long)[$1 length]`/'
+
 settings set target.x86-disassembly-flavor intel
 
 settings set stop-disassembly-count 8
