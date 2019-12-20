@@ -12,7 +12,24 @@
 import lldb
 import os
 
+def banner():
+    xia0LLDB = '''
+      _        ___  _      _      _____  ____   
+     (_)      / _ \| |    | |    |  __ \|  _ \  
+__  ___  __ _| | | | |    | |    | |  | | |_) | 
+\ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
+ >  <| | (_| | |_| | |____| |____| |__| | |_) | 
+/_/\_\_|\__,_|\___/|______|______|_____/|____/   v1.0'''
+
+    return xia0LLDB
+
+def print_usage():
+    print("")
+    print("usage: try \"command -h\" more: https://github.com/4ch12dy/xia0LLDB")
+
 def __lldb_init_module(debugger, internal_dict):
+    print(banner())
+    print_usage()
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)
     load_python_scripts_dir(dir_name)
