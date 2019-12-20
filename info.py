@@ -20,10 +20,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f info.handle_command info -h "[usage] info [-a,-m]"')
-    print('========')
-    print('[info]: get basic info of process/function/module/address/...')
-    print('\tinfo [-m moduleName, -a address, -f funtionName, -u UserDefaults]')
-    print('\tmore usage, try "info -h"')
+    # print('========')
+    # print('[info]: get basic info of process/function/module/address/...')
+    # print('\tinfo [-m moduleName, -a address, -f funtionName, -u UserDefaults]')
+    # print('\tmore usage, try "info -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
