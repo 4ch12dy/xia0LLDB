@@ -19,10 +19,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f debugme.handle_command debugme -h "kill anti-debug in lldb"')
-    print('========')
-    print('[debugme]: kill anti-debug in lldb')
-    print('\tdebugme ')
-    print('\tmore usage, try "debugme -h"')
+    # print('========')
+    # print('[debugme]: kill anti-debug in lldb')
+    # print('\tdebugme ')
+    # print('\tmore usage, try "debugme -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
