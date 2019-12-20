@@ -19,10 +19,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f xutil.handle_command xutil -h "[usage] xutil [options] args"')
-    print('========')
-    print('[xutil]: some util tool for debug, this command is flexable and some options maybe remove future')
-    print('\txutil [-b addr, -s module, -l dylib]')
-    print('\tmore usage, try "xutil -h"')
+    # print('========')
+    # print('[xutil]: some util tool for debug, this command is flexable and some options maybe remove future')
+    # print('\txutil [-b addr, -s module, -l dylib]')
+    # print('\tmore usage, try "xutil -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
@@ -179,7 +179,16 @@ def mload(debugger, modulePath):
     return retStr
 
 def test(debugger, testarg):
-
+    command_script = '@import Foundation;' 
+    command_script += r'''
+    id bundle = objc_msgSend((Class)objc_getClass("UIPasteboard"), @selector(generalPasteboard));
+    id exePath = objc_msgSend((id)bundle, @selector(setString:), @"test123123");
+    //[[UIPasteboard generalPasteboard] setString:@"123test"];
+    
+    "success"
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
     pass
 
 def getInfoByAddress(debugger, address):
