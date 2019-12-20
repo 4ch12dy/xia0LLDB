@@ -20,10 +20,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f patcher.handle_command patcher -h "patch code in lldb"')
-    print('========')
-    print('[patcher]: patch code in lldb')
-    print('\tpatcher -a patch_addr -i instrument -s instrument_count')
-    print('\tmore usage, try "patcher -h"')
+    # print('========')
+    # print('[patcher]: patch code in lldb')
+    # print('\tpatcher -a patch_addr -i instrument -s instrument_count')
+    # print('\tmore usage, try "patcher -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
