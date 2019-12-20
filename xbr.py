@@ -24,10 +24,10 @@ from xia0 import *
 
 def __lldb_init_module (debugger, dict):
     debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
-    print('========')
-    print('[xbr]: set breakpoint on OC function even striped')
-    print('\txbr "-[UIView initWithFrame:]" or "className" for all the class metholds')
-    print('\tmore usage, try "xbr -h"')
+    # print('========')
+    # print('[xbr]: set breakpoint on OC function even striped')
+    # print('\txbr "-[UIView initWithFrame:]" or "className" for all the class metholds')
+    # print('\tmore usage, try "xbr -h"')
 
 def create_command_arguments(command):
     return shlex.split(command)
@@ -613,7 +613,7 @@ def xbr(debugger, command, result, dict):
     if address:
         lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
     else:
-        print "fail, please check the arguments"
+        print("[-] fail, please check the arguments")
 
 def generate_option_parser():
     usage = "usage: xbr [-a/-m/-E] args"
