@@ -60,8 +60,21 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     result.AppendMessage(str('usage: info [-m moduleName, -a address, -u UserDefaults]'))
     return 
 
+def exeCommand(debugger, command):
+    res = lldb.SBCommandReturnObject()
+    interpreter = debugger.GetCommandInterpreter()
+    interpreter.HandleCommand(command, res)
+
+    if not res.HasResult():
+        # something error
+        return res.GetError()
+            
+    response = res.GetOutput()
+    return response
+
 #   get module info by module name 
 def getModulInfoByName(debugger, moduleName):
+
     command_script = '@import Foundation;NSString* moduleName = @"' + moduleName + '";' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
@@ -84,6 +97,20 @@ def getModulInfoByName(debugger, moduleName):
     retStr
     '''
     retStr = exeScript(debugger, command_script)
+    if "error" in retStr:
+        print("[-] something error in OC script # " + retStr.strip())
+        print("[*] so use command to get info")
+        ret = exeCommand(debugger, "im li -o -f")
+        pattern = ".*" + moduleName.replace("\"", "")
+        match = re.search(pattern, ret) # TODO: more strict
+        if match:
+            found = match.group(0)
+        else:
+            print("[-] not found image:"+moduleName)
+            return
+
+        return found
+
     return hexIntInStr(retStr)
 
 #   get address info by address
