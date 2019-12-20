@@ -19,10 +19,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f dumpdecrypted.handle_command dumpdecrypted -h "[usage] dumpdecrypted"')
-    print('========')
-    print('[dumpdecrypted]: the lldb dumpdecrypted version')
-    print('\tdumpdecrypted')
-    print('\tmore usage, try "dumpdecrypted -h"')
+    # print('========')
+    # print('[dumpdecrypted]: the lldb dumpdecrypted version')
+    # print('\tdumpdecrypted')
+    # print('\tmore usage, try "dumpdecrypted -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
