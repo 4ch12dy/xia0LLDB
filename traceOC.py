@@ -19,10 +19,10 @@ import re
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
     'command script add -f traceOC.handle_command traceOC -h "trace ObjectC function call"')
-    print('========')
-    print('[traceOC]: trace ObjectC function call')
-    print('\ttraceOC ')
-    print('\tmore usage, try "traceOC -h"')
+    # print('========')
+    # print('[traceOC]: trace ObjectC function call')
+    # print('\ttraceOC ')
+    # print('\tmore usage, try "traceOC -h"')
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
