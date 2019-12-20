@@ -14,6 +14,8 @@ command regex pbpaste -h "paste string to iOS device pasteboard" -s "pbpaste str
 
 command regex pbcopy -h "get string from iOS device pasteboard" 's/(.*)/expression -F Foundation -O -- id obj = objc_msgSend((Class)objc_getClass("UIPasteboard"), @selector(generalPasteboard));id str = objc_msgSend((id)obj, @selector(string)); str/'
 
+command regex pwindow -h "po key window" 's/(.*)/expression -F Foundation -O -- id obj = [[[UIApplication sharedApplication] keyWindow] recursiveDescription]; obj/'
+
 command regex data 's/(.+)/mem read  `(void *)[$1 bytes]` -c `(long)[$1 length]`/'
 
 settings set target.x86-disassembly-flavor intel
