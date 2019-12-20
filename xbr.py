@@ -528,12 +528,30 @@ def xbr(debugger, command, result, dict):
         else:
             targetAddr_int = int(targetAddr, 10)
 
-        if options.hacker:
+        moduleSlide = getProcessModuleSlide(debugger, modulePath)
+        if "error" in moduleSlide:
+            print("[-] error in oc script # " + moduleSlide.strip())
             if modulePath:
                 targetImagePath = modulePath
             else:               
                 mainImagePath = getMainImagePath(debugger)
-                mainImagePath = mainImagePath.strip()[1:-1]
+                if "no value available" in  mainImagePath or "error" in mainImagePath:
+                    ret = exeCommand(debugger, "target list")
+                    pattern = '/.*\('
+                    match = re.search(pattern, ret) # TODO: more strict
+                    if match:
+                        found = match.group(0)
+                        found = found.split("(")[0]
+                        found = found.strip()
+                    else:
+                        print("[-] failed to auto get main module, use -m option")
+                        return
+ 
+                    mainImagePath = found
+                    print("[+] use \"target list\" to get main module:" + mainImagePath)
+                else:
+                    mainImagePath = mainImagePath.strip()[1:-1]
+
                 targetImagePath = mainImagePath
 
             ret = exeCommand(debugger, "im li -o -f")
@@ -547,9 +565,8 @@ def xbr(debugger, command, result, dict):
             moduleSlide = found.split()[0]
             print("[*] use \"im li -o -f\" cmd to get image slide:"+moduleSlide)
             moduleSlide = int(moduleSlide, 16)
-        else:
 
-            moduleSlide = getProcessModuleSlide(debugger, modulePath)
+        else:
             moduleSlide = int(moduleSlide, 10)
             
         brAddr = moduleSlide + targetAddr_int
@@ -619,11 +636,5 @@ def generate_option_parser():
             default=None,
             dest="entryAddress",
             help="set a breakpoint at entry address/main")
-
-    parser.add_option("-H", "--hacker",
-        action="store_true",
-        default=None,
-        dest="hacker",
-        help="use some hacker trick to run")
 
     return parser
