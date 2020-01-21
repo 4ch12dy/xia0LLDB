@@ -357,7 +357,15 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
 
             // (unsigned char *)mh + eic->cryptoff
 
-            r = (long)write(outfd, (unsigned char *)mh + eic->cryptoff, eic->cryptsize);
+            char* tmp_buf = (char*)malloc(eic->cryptsize);
+            char* tmp_ptr = (char*)(mh + eic->cryptoff);
+
+            for(int i = 0; i < eic->cryptsize; i ++){
+                tmp_buf[i] = *tmp_ptr;
+                tmp_ptr ++;
+            }
+
+            r = (long)write(outfd, (unsigned char *)tmp_buf, eic->cryptsize);
             if (r != eic->cryptsize) {
                 uint64_t flag = (uint64_t)(mh);
                 // printf("Error no.%d: %s\n", errno, strerror(errno));
@@ -365,6 +373,8 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
                 printf("[-] Error writing file r=%lx offset=%lx size=%lx flag=%lx\n", r,eic->cryptoff, eic->cryptsize, flag);
                 return;
             }
+
+            free(tmp_buf);
             
             /* and finish with the remainder of the file */
             n = restsize;
