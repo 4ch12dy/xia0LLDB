@@ -357,13 +357,15 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
 
             // (unsigned char *)mh + eic->cryptoff
 
-            char* tmp_buf = (char*)malloc(eic->cryptsize);
-            char* tmp_ptr = (char*)(mh + eic->cryptoff);
+            
+            unsigned char * tmp_buf = (unsigned char *)malloc(eic->cryptsize);
+            unsigned char * tmp_ptr = (unsigned char *)((unsigned char *)mh + eic->cryptoff);
 
             for(int i = 0; i < eic->cryptsize; i ++){
                 tmp_buf[i] = *tmp_ptr;
                 tmp_ptr ++;
             }
+            
 
             r = (long)write(outfd, (unsigned char *)tmp_buf, eic->cryptsize);
             if (r != eic->cryptsize) {
@@ -427,7 +429,22 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
     return ret
 
 
+def exeCommand(debugger, command):
+    res = lldb.SBCommandReturnObject()
+    interpreter = debugger.GetCommandInterpreter()
+    interpreter.HandleCommand(command, res)
+
+    if not res.HasResult():
+        # something error
+        return res.GetError()
+            
+    response = res.GetOutput()
+    return response
+
 def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
+    # must delete all breakpoints.
+    print("[*] delete all breakpoints")
+    exeCommand(debugger, "br de -f")
     #dumpMachoToFile(debugger,)
     if modulePath and moduleIdx:
         print dumpMachoToFile(debugger, moduleIdx, modulePath)
