@@ -109,7 +109,122 @@ def getAllImageOfApp(debugger, appDir):
     ret = exeScript(debugger, command_script)
     return ret
 
-def dumpMachoToFile(debugger, machoIdx, machoPath):
+def getMachOEntryOffset(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+    //NSMutableString* retStr = [NSMutableString string];
+
+    #define MH_MAGIC_64 0xfeedfacf 
+    #define LC_SEGMENT_64   0x19
+    #define LC_REQ_DYLD     0x80000000
+    #define LC_MAIN         (0x28|LC_REQ_DYLD)
+
+    typedef int             integer_t;
+    typedef integer_t       cpu_type_t;
+    typedef integer_t       cpu_subtype_t;
+    typedef integer_t       cpu_threadtype_t;
+
+    struct mach_header_64 {
+        uint32_t    magic;      /* mach magic number identifier */
+        cpu_type_t  cputype;    /* cpu specifier */
+        cpu_subtype_t   cpusubtype; /* machine specifier */
+        uint32_t    filetype;   /* type of file */
+        uint32_t    ncmds;      /* number of load commands */
+        uint32_t    sizeofcmds; /* the size of all the load commands */
+        uint32_t    flags;      /* flags */
+        uint32_t    reserved;   /* reserved */
+    };
+
+    struct load_command {
+        uint32_t cmd;       /* type of load command */
+        uint32_t cmdsize;   /* total size of command in bytes */
+    };
+
+    typedef int             vm_prot_t;
+    struct segment_command_64 { /* for 64-bit architectures */
+        uint32_t    cmd;        /* LC_SEGMENT_64 */
+        uint32_t    cmdsize;    /* includes sizeof section_64 structs */
+        char        segname[16];    /* segment name */
+        uint64_t    vmaddr;     /* memory address of this segment */
+        uint64_t    vmsize;     /* memory size of this segment */
+        uint64_t    fileoff;    /* file offset of this segment */
+        uint64_t    filesize;   /* amount to map from the file */
+        vm_prot_t   maxprot;    /* maximum VM protection */
+        vm_prot_t   initprot;   /* initial VM protection */
+        uint32_t    nsects;     /* number of sections in segment */
+        uint32_t    flags;      /* flags */
+    };
+
+    struct section_64 { /* for 64-bit architectures */
+        char        sectname[16];   /* name of this section */
+        char        segname[16];    /* segment this section goes in */
+        uint64_t    addr;       /* memory address of this section */
+        uint64_t    size;       /* size in bytes of this section */
+        uint32_t    offset;     /* file offset of this section */
+        uint32_t    align;      /* section alignment (power of 2) */
+        uint32_t    reloff;     /* file offset of relocation entries */
+        uint32_t    nreloc;     /* number of relocation entries */
+        uint32_t    flags;      /* flags (section type and attributes)*/
+        uint32_t    reserved1;  /* reserved (for offset or index) */
+        uint32_t    reserved2;  /* reserved (for count or sizeof) */
+        uint32_t    reserved3;  /* reserved */
+    };
+
+    struct entry_point_command {
+        uint32_t  cmd;  /* LC_MAIN only used in MH_EXECUTE filetypes */
+        uint32_t  cmdsize;  /* 24 */
+        uint64_t  entryoff; /* file (__TEXT) offset of main() */
+        uint64_t  stacksize;/* if not zero, initial stack size */
+    };
+
+    int x_offset = 0;
+    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
+
+    if(header->magic != MH_MAGIC_64) {
+        return ;
+    }
+
+    x_offset = sizeof(struct mach_header_64);
+    int ncmds = header->ncmds;
+    //uint64_t textStart = 0;
+    //uint64_t textEnd = 0;
+    uint64_t main_addr = 0;
+    while(ncmds--) {
+        /* go through all load command to find __TEXT segment*/
+        struct load_command * lcp = (struct load_command *)((uint8_t*)header + x_offset);
+        x_offset += lcp->cmdsize;
+        if(lcp->cmd == LC_MAIN) {
+            uintptr_t slide =  (uintptr_t)_dyld_get_image_vmaddr_slide(0);          
+            struct entry_point_command* main_cmd = (struct entry_point_command*)lcp;
+            main_addr = (uint64_t)slide + main_cmd->entryoff + 0x100000000;
+
+            break;
+        }
+    }
+    char ret[50];
+
+    /*
+    char textStartAddrStr[20];
+    sprintf(textStartAddrStr, "0x%016lx", textStart);
+
+    char textEndAddrStr[20];
+    sprintf(textEndAddrStr, "0x%016lx", textEnd);
+
+
+    char* splitStr = ",";
+    strcpy(ret,textStartAddrStr);
+    strcat(ret,splitStr);
+    strcat(ret,textEndAddrStr);
+    */
+
+    sprintf(ret, "0x%016lx", main_addr);
+
+    ret
+    '''
+    retStr = exeScript(debugger, command_script)
+    return retStr
+
+def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
     command_script_header = r'''
     // header
     #define MH_MAGIC    0xfeedface  /* the mach magic number */
@@ -200,7 +315,8 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
     };
     '''
     command_script_init = 'struct mach_header* mh = (struct mach_header*)_dyld_get_image_header({});'.format(machoIdx) 
-    command_script_init += 'const char *path = "{}"'.format(machoPath)
+    command_script_init += 'const char *path = "{}";'.format(machoPath)
+    command_script_init += 'uint64_t main_addr = (uint64_t){};'.format(fix_addr)
 
     command_script = command_script_header + command_script_init
 
@@ -362,6 +478,14 @@ def dumpMachoToFile(debugger, machoIdx, machoPath):
             unsigned char * tmp_ptr = (unsigned char *)((unsigned char *)mh + eic->cryptoff);
 
             for(int i = 0; i < eic->cryptsize; i ++){
+                if(main_addr != 0 && main_addr == (uint64_t)tmp_ptr){
+                    tmp_buf[i] = 0xF6;
+                    tmp_buf[++i] = 0x57;
+                    tmp_buf[++i] = 0xBD;
+                    tmp_buf[++i] = 0xA9;
+                    tmp_ptr += 4;
+                    continue;
+                }
                 tmp_buf[i] = *tmp_ptr;
                 tmp_ptr ++;
             }
@@ -455,17 +579,24 @@ def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
         appImagesStr = getAllImageOfApp(debugger, appDir)
         
         appImagesArr = appImagesStr.split("#")
-        
         for imageInfo in appImagesArr:
-            if not imageInfo:
+            if not imageInfo or not "," in imageInfo:
+                print("[-] image info is null, skip image # " + imageInfo)
                 continue
 
+            print("[*] now is image: " + imageInfo)
             info = imageInfo.split(",")
 
             if len(info) == 2:
                 print("[*] start dump ["+ info[0] +"] image:" + info[1])
                 # print "idx:" + info[0]
                 # print "path:" + info[1]
+                if info[1] == mainImagePath:
+                    entryAddrStr = getMachOEntryOffset(debugger)
+                    entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
+                    print("[+] fix main addr:" + hex(entryAddr_int))
+                    print dumpMachoToFile(debugger, info[0], info[1], entryAddr_int)
+                    continue
                 print dumpMachoToFile(debugger, info[0], info[1])
 
     return "\n\n[*] Developed By xia0@2019"
