@@ -365,7 +365,7 @@ def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
         printf("[+] detected 32bit ARM binary in memory.\n");
     }
     /* searching all load commands for an LC_ENCRYPTION_INFO load command */
-
+    BOOL is_image_crypted = NO;
     for (i=0; i<mh->ncmds; i++) {
         if (lc->cmd == LC_ENCRYPTION_INFO || lc->cmd == LC_ENCRYPTION_INFO_64) {
 
@@ -374,7 +374,7 @@ def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
             if (eic->cryptid == 0) {
                 break;
             }
-
+            is_image_crypted = YES;
             off_cryptid=(off_t)((uint8_t*)&eic->cryptid - (uint8_t*)mh);
             
             printf("[+] offset to cryptid found: @%p(from %p) = %x\n", &eic->cryptid, mh, off_cryptid);
@@ -551,12 +551,17 @@ def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
 
         lc = (struct load_command *)((unsigned char *)lc+lc->cmdsize);
     }
-
-    printf("[*] This mach-o file decrypted done.\n");
-      
     NSMutableString* retStr = [NSMutableString string];
-    [retStr appendString:@"[+] dump macho file at:"];
-    [retStr appendString:@(npath)];
+    if(is_image_crypted){
+        printf("[*] This mach-o file decrypted done.\n");
+        [retStr appendString:@"[+] dump macho file at:"];
+        [retStr appendString:@(npath)];
+    }else{
+        printf("[*] this image is not crypted\n");
+        [retStr appendString:@"[+] this macho file at:"];
+        [retStr appendString:@(rpath)];
+    }
+
     
     retStr
     '''
