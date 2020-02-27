@@ -15,6 +15,8 @@ import shlex
 import optparse
 import json
 import re
+import time
+from utils import *
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -35,14 +37,24 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         
     target = exe_ctx.target
     thread = exe_ctx.thread
-    
-    if options.modulePath and options.moduleIdx:
-        module_path = options.modulePath
-        module_idx = options.moduleIdx
-        print("[*] you manual set dump module idx:{} and path:{}".format(module_idx, module_path))
-        ret = dumpdecrypted(debugger, module_path, module_idx)
-    else:   
+
+    if options.superX:
+        ILOG("set breakpoint at CFBundleGetMainBundle")
+        exe_cmd(debugger, "b CFBundleGetMainBundle")
+        time.sleep(3)
+        ILOG("will continue process and dump")
+        exe_cmd(debugger, "c")
+        time.sleep(2)
+        ILOG("start execute dumpdecrypted")
         ret = dumpdecrypted(debugger)
+    else:
+        if options.modulePath and options.moduleIdx:
+            module_path = options.modulePath
+            module_idx = options.moduleIdx
+            print("[*] you manual set dump module idx:{} and path:{}".format(module_idx, module_path))
+            ret = dumpdecrypted(debugger, module_path, module_idx)
+        else:   
+            ret = dumpdecrypted(debugger)
 
     result.AppendMessage(str(ret))
             
@@ -635,5 +647,11 @@ def generate_option_parser():
             default=None,
             dest="moduleIdx",
             help="set module index")
+
+    parser.add_option("-X", "--superX",
+            action="store_true",
+            default=None,
+            dest='superX',
+            help="only for lldb attach in -x backboard launch app")
 
     return parser
