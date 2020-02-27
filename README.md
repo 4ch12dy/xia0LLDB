@@ -210,7 +210,11 @@ Symbol addr: 0x1cd4ca3b8
 
 #### dumpdecrypted [2019/09/22]
 
-dump macho image in lldb
+dump macho image in lldb, default dump all macho image.
+
+👇👇👇 very important!!!
+
+**Notice: if app crash at launch like detect jailbreak, you should use -x backboard launch app, and just input `dumpdecrypted -X` see more: [http://4ch12dy.site/2020/02/26/lldb-how-to-dump-gracefully/lldb-how-to-dump-gracefully/](http://4ch12dy.site/2020/02/26/lldb-how-to-dump-gracefully/lldb-how-to-dump-gracefully/)** 
 
 ```
 (lldb) dumpdecrypted
