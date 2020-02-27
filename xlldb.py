@@ -19,13 +19,13 @@ def banner():
 __  ___  __ _| | | | |    | |    | |  | | |_) | 
 \ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
  >  <| | (_| | |_| | |____| |____| |__| | |_) | 
-/_/\_\_|\__,_|\___/|______|______|_____/|____/   v1.0'''
+/_/\_\_|\__,_|\___/|______|______|_____/|____/   v1.1'''
 
     return xia0LLDB
 
 def print_usage():
     print("")
-    print("usage: try \"command -h\" more: https://github.com/4ch12dy/xia0LLDB")
+    print("usage: try \"command -h\" to help, see more: https://github.com/4ch12dy/xia0LLDB")
 
 def __lldb_init_module(debugger, internal_dict):
     print(banner())
