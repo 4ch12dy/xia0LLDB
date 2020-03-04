@@ -2,15 +2,15 @@
 
 [中文版README](./resource/README-zh.md) : it is deprecated
 
-### Warning(=_<)
+### Notice(^_<)
 
-There is a problem that lldb import xia0LLDB  in last macOS Catalina, because the last macOS's lldb default use python3. Here is a way to change it to python2
+~~There is a problem that lldb import xia0LLDB  in last macOS Catalina, because the last macOS's lldb default use python3. Here is a way to change it to python2~~
 
-```
-defaults write com.apple.dt.lldb DefaultPythonVersion 2
-```
+~~`defaults write com.apple.dt.lldb DefaultPythonVersion 2`~~
 
+**Welcome to xia0LLDB - Python3 Edition**
 
+**Thanks [@Lakr](https://twitter.com/Lakr233) port it to Python3 !**
 
 ### Install 
 
