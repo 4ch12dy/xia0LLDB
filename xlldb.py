@@ -31,12 +31,13 @@ def banner():
 
 def __lldb_init_module(debugger, internal_dict):
     print(banner())
-    colorme.bootstrapNotice()
+    print("[xia0LLDB] * version: v2.0 ")
+    colorme.bootstrap_notice()
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)
     print("[xia0LLDB] + Loading all scripts from " + dir_name)
     load_python_scripts_dir(dir_name)
-    print("[xia0LLDB] * Finished *")
+    print("[xia0LLDB] * Finished ")
 
 def load_python_scripts_dir(dir_name):
     this_files_basename = os.path.basename(__file__)

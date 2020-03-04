@@ -17,6 +17,7 @@ import shlex
 import optparse
 import json
 import re
+import utils
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -40,42 +41,30 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     _ = exe_ctx.thread
     
     if options.moduleName:
-        ret = getModulInfoByName(debugger, str(options.moduleName))
+        ret = get_module_info_by_name(debugger, str(options.moduleName))
         result.AppendMessage(str(ret))
         return
         
     if options.address:
-        ret = getAddressInfoByAddress(debugger, str(options.address))
+        ret = get_address_info_by_address(debugger, str(options.address))
         result.AppendMessage(str(ret))
         return
 
     if options.function:
-        ret = getFuncInfoByName(debugger, str(options.function))
+        ret = get_func_info_by_name(debugger, str(options.function))
         result.AppendMessage(str(ret))
         return
 
     if options.UserDefaults:
-        ret = getUserDefaultsInfoByKey(debugger, str(options.UserDefaults))
+        ret = get_userdefaults_info_by_key(debugger, str(options.UserDefaults))
         result.AppendMessage(str(ret))
         return
             
     result.AppendMessage(str('usage: info [-m moduleName, -a address, -u UserDefaults]'))
     return 
 
-def exeCommand(debugger, command):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand(command, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
 #   get module info by module name 
-def getModulInfoByName(debugger, moduleName):
+def get_module_info_by_name(debugger, moduleName):
 
     command_script = '@import Foundation;NSString* moduleName = @"' + moduleName + '";' 
     command_script += r'''
@@ -98,25 +87,25 @@ def getModulInfoByName(debugger, moduleName):
     }
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
+    retStr = utils.exe_script(debugger, command_script)
     if "error" in retStr:
-        print("[-] something error in OC script # " + retStr.strip())
-        print("[*] so use command to get info")
+        utils.ELOG("something error in OC script # " + retStr.strip())
+        utils.ILOG("so use command to get info")
         ret = exeCommand(debugger, "im li -o -f")
         pattern = ".*" + moduleName.replace("\"", "")
         match = re.search(pattern, ret) # TODO: more strict
         if match:
             found = match.group(0)
         else:
-            print("[-] not found image:"+moduleName)
+            utils.ELOG("not found image:"+moduleName)
             return
 
         return found
 
-    return hexIntInStr(retStr)
+    return utils.hex_int_in_str(retStr)
 
 #   get address info by address
-def getAddressInfoByAddress(debugger, address):
+def get_address_info_by_address(debugger, address):
     command_script = 'void * targetAddr = (void*)' + address + ';' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
@@ -150,10 +139,10 @@ def getAddressInfoByAddress(debugger, address):
 
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    retStr = utils.exe_script(debugger, command_script)
+    return utils.hex_int_in_str(retStr)
 
-def getFuncInfoByName(debugger, funcName):
+def get_func_info_by_name(debugger, funcName):
     command_script = 'const char * func_name = "' + funcName + '";'
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
@@ -206,12 +195,11 @@ def getFuncInfoByName(debugger, funcName):
     }
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    retStr = utils.exe_script(debugger, command_script)
+    return utils.hex_int_in_str(retStr)
 
     
-    
-def getUserDefaultsInfoByKey(debugger, key):
+def get_userdefaults_info_by_key(debugger, key):
     command_script = r'''
     NSArray *keys = [[[NSUserDefaults standardUserDefaults] dictionaryRepresentation] allKeys];
     NSArray *values = [[[NSUserDefaults standardUserDefaults] dictionaryRepresentation] allValues];
@@ -221,40 +209,7 @@ def getUserDefaultsInfoByKey(debugger, key):
 
     retDic
     '''
-    return exeScript(debugger, command_script)
-
-  
-def hexIntInStr(needHexStr):
-
-    def handler(reobj):
-        intvalueStr = reobj.group(0)
-        
-        r = hex(int(intvalueStr))
-        return r
-        
-    # pylint: disable=anomalous-backslash-in-string
-    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
-
-    return re.sub(pattern, handler, needHexStr, flags = 0)  
-
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
+    return utils.exe_script(debugger, command_script)
 
 def generate_option_parser():
     usage = "usage: info info [-m moduleName, -a address, -f funtionName, -u UserDefaults]'"

@@ -16,13 +16,10 @@ import os
 import shlex
 import optparse
 import json
-
-import choose
 import colorme
+import utils
 
 BLOCK_JSON_FILE = None
-
-IS_NO_COLOR_OUTPUT = False
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -34,7 +31,7 @@ def __lldb_init_module(debugger, internal_dict):
 
                     
 def handle_command(debugger, command, exe_ctx, result, internal_dict):
-    global BLOCK_JSON_FILE, IS_NO_COLOR_OUTPUT
+    global BLOCK_JSON_FILE
     
     '''
     Symbolicate backtrace. Will symbolicate a stripped backtrace
@@ -49,10 +46,6 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     except:
         result.SetError(parser.usage)
         return
-        
-    if options.nocolor:
-        result.AppendMessage("set no color")
-        IS_NO_COLOR_OUTPUT = True
 
     if options.verbose:
         BLOCK_JSON_FILE = None
@@ -61,13 +54,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     result.AppendMessage('  ==========================================xia0LLDB===========================================')
     if options.file:
         BLOCK_JSON_FILE = str(options.file)
-        result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr(BLOCK_JSON_FILE, 'redd')))
+        result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attr_str(BLOCK_JSON_FILE, 'redd')))
     else:
         if BLOCK_JSON_FILE:
-            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr(BLOCK_JSON_FILE, 'redd')))
+            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attr_str(BLOCK_JSON_FILE, 'redd')))
             pass
         else:
-            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr('Not Set The Block Symbol Json File, Try \'sbt -f\'', 'redd')))
+            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attr_str('Not Set The Block Symbol Json File, Try \'sbt -f\'', 'redd')))
             pass
     result.AppendMessage('  =============================================================================================')
 
@@ -81,13 +74,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     #     frameAddresses = [f.addr.GetLoadAddress(target) for f in thread.frames]
     #     firstFrameAddr = frameAddresses[0]
 
-    frameString = symbolishStackTraceFrame(debugger,target,thread)
+    frameString = symbolish_stack_trace_frame(debugger,target,thread)
     # return 2 screen
     result.AppendMessage(str(frameString))
     return 
 
 
-def symbolishStackTraceFrame(debugger,target, thread):
+def symbolish_stack_trace_frame(debugger,target, thread):
     frame_string = ''
     idx = 0
 
@@ -104,35 +97,35 @@ def symbolishStackTraceFrame(debugger,target, thread):
             symbol_offset = file_addr - start_addr
             modulePath = str(f.addr.module.file)
 
-            # isMainModuleFromAddress? findname : symbol name
-            if isMainModuleFromAddress(target,debugger,load_addr):
+            # is_main_module_from_address? findname : symbol name
+            if is_main_module_from_address(target,debugger,load_addr):
                 if idx + 2 == len(thread.frames):
                     metholdName = 'main + ' + str(symbol_offset)
                 else:
-                    command_script = findSymbolFromAddressScript(load_addr, modulePath)
-                    one = exeScript(debugger,command_script)
+                    command_script = find_symbol_from_address_script(load_addr, modulePath)
+                    one = utils.exe_script(debugger,command_script)
                     # is set the block file path
                     if BLOCK_JSON_FILE and len(BLOCK_JSON_FILE) > 0:
-                        two = findBlockSymbolFromAdress(file_addr)
-                        response = chooseBest(one, two)
+                        two = find_block_symbol_from_adress(file_addr)
+                        response = choose_best(one, two)
                     else:
                         response = one
-                    response = checkIfAnalysisError(response)
+                    response = check_if_analysis_error(response)
                     metholdName = str(response).replace("\n","")
-                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol}\n'.format(num=idx, f_addr=colorme.attrStr(str(hex(file_addr)), 'cyan'), m_addr=colorme.attrStr(hex(load_addr),'grey'),mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=colorme.attrStr(metholdName, 'green'))
+                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol}\n'.format(num=idx, f_addr=colorme.attr_str(str(hex(file_addr)), 'cyan'), m_addr=colorme.attr_str(hex(load_addr),'grey'),mod=colorme.attr_str(str(f.addr.module.file.basename), 'yellow'), symbol=colorme.attr_str(metholdName, 'green'))
             else:
                 metholdName = f.addr.symbol.name
-                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol} + {offset} \n'.format(num=idx, f_addr=colorme.attrStr(str(hex(file_addr)), 'cyan'), m_addr=colorme.attrStr(hex(load_addr),'grey'),mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=metholdName, offset=symbol_offset)
+                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol} + {offset} \n'.format(num=idx, f_addr=colorme.attr_str(str(hex(file_addr)), 'cyan'), m_addr=colorme.attr_str(hex(load_addr),'grey'),mod=colorme.attr_str(str(f.addr.module.file.basename), 'yellow'), symbol=metholdName, offset=symbol_offset)
         else:
             frame_string += '  frame #{num}: {addr} {mod}`{func} at {file}\n'.format(
-                    num=idx, addr=hex(load_addr), mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'),
+                    num=idx, addr=hex(load_addr), mod=colorme.attr_str(str(f.addr.module.file.basename), 'yellow'),
                     func='%s [inlined]' % function if f.IsInlined() else function,
                     file=f.addr.symbol.name)
         
         idx = idx + 1
     return frame_string
 
-def chooseBest(scriptRet, jsonFileRet):
+def choose_best(scriptRet, jsonFileRet):
     one = scriptRet.replace(" ", "")
     two = jsonFileRet.replace(" ", "")
 
@@ -151,7 +144,7 @@ def chooseBest(scriptRet, jsonFileRet):
 
     return jsonFileRet
 
-def checkIfAnalysisError(frameString):
+def check_if_analysis_error(frameString):
     maxDis = 2500
     frameString_strip = frameString.replace(" ", "")
     try:
@@ -171,7 +164,7 @@ def checkIfAnalysisError(frameString):
     else:
         return frameString
     
-def findBlockSymbolFromAdress(address):
+def find_block_symbol_from_adress(address):
     try:
         f = open(BLOCK_JSON_FILE, 'r')
         symbolJsonArr = json.loads(f.read())
@@ -196,7 +189,7 @@ def findBlockSymbolFromAdress(address):
     result = theSymbol + ' + ' + str(theDis)
     return result
 
-def isMainModuleFromAddress(target,debugger,address):
+def is_main_module_from_address(target,debugger,address):
     #  get moduleName of address
     addr = target.ResolveLoadAddress(address)
     moduleName = addr.module.file.basename
@@ -207,7 +200,7 @@ def isMainModuleFromAddress(target,debugger,address):
     path
     '''
     # is in executable path?
-    path = exeScript(debugger, getExecutablePathScript)
+    path = utils.exe_script(debugger, getExecutablePathScript)
     appDir = os.path.dirname(path.strip()[1:-1])
 
 
@@ -225,49 +218,7 @@ def isMainModuleFromAddress(target,debugger,address):
     else:
         return False
 
-def getImageInfoFromAddress(debugger, address):
-    command_script = 'void * targetAddr = (void*)' + address + ';' 
-    command_script += r'''
-    NSMutableString* retStr = [NSMutableString string];
-
-    typedef struct dl_info {
-        const char      *dli_fname;     /* Pathname of shared object */
-        void            *dli_fbase;     /* Base address of shared object */
-        const char      *dli_sname;     /* Name of nearest symbol */
-        void            *dli_saddr;     /* Address of nearest symbol */
-    } Dl_info;
-
-    Dl_info dl_info;
-
-    dladdr(targetAddr, &dl_info);
-
-    char* module_path = (char*)dl_info.dli_fname;
-    uintptr_t module_base = (uintptr_t)dl_info.dli_fbase;
-    char* symbol_name = (char*)dl_info.dli_sname;
-    uintptr_t symbol_addr = (uintptr_t)dl_info.dli_saddr;
-
-    [retStr appendString:@(module_path)];
-    [retStr appendString:@","];
-    [retStr appendString:(id)[@(module_base) stringValue]];
-    
-    retStr
-    '''
-    retStr = exeScript(debugger, command_script)
-    return choose.hexIntInStr(retStr)
-
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def findSymbolFromAddressScript(frame_addr, module_path):
+def find_symbol_from_address_script(frame_addr, module_path):
     command_script = 'uintptr_t frame_addr =' + str(frame_addr) + ';'
     command_script += 'const char *path =\"' + str(module_path) + '\";'
     command_script += r'''
@@ -356,13 +307,6 @@ def findSymbolFromAddressScript(frame_addr, module_path):
     '''
     return command_script
 
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
-
 def generate_option_parser():
     usage = "usage: sbt -f block-json-file-path"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
@@ -378,12 +322,6 @@ def generate_option_parser():
                     default=None,
                     dest="file",
                     help="special the block json file")
-
-    parser.add_option("-x", "--XcodeNoColor",
-                    action="store_true",
-                    default=None,
-                    dest='nocolor',
-                    help="disable color output for Xcode")
 
     parser.add_option("-r", "--reset",
                     action="store_true",

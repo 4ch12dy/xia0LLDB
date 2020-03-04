@@ -3,8 +3,6 @@
 import re
 import lldb
 import os
-import choose
-
 
 def ILOG(log):
     print("[*] " + log)
@@ -14,6 +12,31 @@ def ELOG(log):
 
 def SLOG(log):
     print("[+] " + log)
+
+def hex_int_in_str(needHexStr):
+    
+    def handler(reobj):
+        intvalueStr = reobj.group(0)
+        
+        r = hex(int(intvalueStr))
+        return r
+    
+    # pylint: disable=anomalous-backslash-in-string
+    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
+
+    return re.sub(pattern, handler, needHexStr, flags = 0)
+
+def exe_script(debugger,command_script):
+    res = lldb.SBCommandReturnObject()
+    interpreter = debugger.GetCommandInterpreter()
+    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
+
+    if not res.HasResult():
+        # something error
+        return res.GetError()
+            
+    response = res.GetOutput()
+    return response
 
 def exe_cmd(debugger, command):
     res = lldb.SBCommandReturnObject()
@@ -46,7 +69,7 @@ def get_app_path(debugger):
     SLOG("use \"target list\" to get main module:" + mainImagePath)
     return mainImagePath
 
-def getAllImageOfApp(debugger, appDir):
+def get_all_image_of_app(debugger, appDir):
     command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];

@@ -53,7 +53,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         if options.modulePath and options.moduleIdx:
             module_path = options.modulePath
             module_idx = options.moduleIdx
-            print("[*] you manual set dump module idx:{} and path:{}".format(module_idx, module_path))
+            utils.ILOG("you manual set dump module idx:{} and path:{}".format(module_idx, module_path))
             ret = dumpdecrypted(debugger, module_path, module_idx)
         else:   
             ret = dumpdecrypted(debugger)
@@ -62,18 +62,18 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
             
     return 
 
-def getMainImagePath(debugger):
+def get_main_image_path(debugger):
     
     command_script = r''' 
     const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
     path
     '''
     # is in executable path?
-    ret = exeScript(debugger, command_script)
+    ret = utils.exe_script(debugger, command_script)
     ret = ret.strip()
     return ret[1:-1]
 
-def getMainImageMachOHeader(debugger):
+def get_main_image_macho_header(debugger):
     command_script = r''' 
 
     typedef integer_t       cpu_type_t;
@@ -97,10 +97,10 @@ def getMainImageMachOHeader(debugger):
     header_int
     '''
     # is in executable path?
-    ret = exeScript(debugger, command_script)
+    ret = utils.exe_script(debugger, command_script)
     return hex(int(ret, 10))
 
-def getAllImageOfApp(debugger, appDir):
+def get_all_image_of_app(debugger, appDir):
     command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
@@ -120,10 +120,10 @@ def getAllImageOfApp(debugger, appDir):
     }
     retStr
     '''
-    ret = exeScript(debugger, command_script)
+    ret = utils.exe_script(debugger, command_script)
     return ret
 
-def getMachOEntryOffset(debugger):
+def get_macho_entry_offset(debugger):
     command_script = '@import Foundation;' 
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
@@ -235,10 +235,10 @@ def getMachOEntryOffset(debugger):
 
     ret
     '''
-    retStr = exeScript(debugger, command_script)
+    retStr = utils.exe_script(debugger, command_script)
     return retStr
 
-def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
+def dump_macho_to_file(debugger, machoIdx, machoPath, fix_addr=0):
     command_script_header = r'''
     // header
     #define MH_MAGIC    0xfeedface  /* the mach magic number */
@@ -567,76 +567,44 @@ def dumpMachoToFile(debugger, machoIdx, machoPath, fix_addr=0):
     
     retStr
     '''
-    ret = exeScript(debugger, command_script)
+    ret = utils.exe_script(debugger, command_script)
 
     return ret
 
-
-def exeCommand(debugger, command):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand(command, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
 def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
     # must delete all breakpoints.
-    print("[*] delete all breakpoints")
-    exeCommand(debugger, "br de -f")
-    #dumpMachoToFile(debugger,)
+    utils.ILOG("delete all breakpoints")
+    utils.exe_cmd(debugger, "br de -f")
+    #dump_macho_to_file(debugger,)
     if modulePath and moduleIdx:
-        print(dumpMachoToFile(debugger, moduleIdx, modulePath))
+        print(dump_macho_to_file(debugger, moduleIdx, modulePath))
     else:
-        mainImagePath = getMainImagePath(debugger)
+        mainImagePath = get_main_image_path(debugger)
         appDir = os.path.dirname(mainImagePath)
         
-        appImagesStr = getAllImageOfApp(debugger, appDir)
+        appImagesStr = get_all_image_of_app(debugger, appDir)
         
         appImagesArr = appImagesStr.split("#")
         for imageInfo in appImagesArr:
             if not imageInfo or not "," in imageInfo:
-                print("[-] image info is null, skip image # " + imageInfo)
+                utils.ELOG("image info is null, skip image # " + imageInfo)
                 continue
 
-            print("[*] now is image: " + imageInfo)
+            utils.ILOG("now is image: " + imageInfo)
             info = imageInfo.split(",")
 
             if len(info) == 2:
-                print("[*] start dump ["+ info[0] +"] image:" + info[1])
+                utils.ILOG("start dump ["+ info[0] +"] image:" + info[1])
                 # print "idx:" + info[0]
                 # print "path:" + info[1]
                 if info[1] == mainImagePath:
-                    entryAddrStr = getMachOEntryOffset(debugger)
+                    entryAddrStr = get_macho_entry_offset(debugger)
                     entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
-                    print("[+] fix main addr:" + hex(entryAddr_int))
-                    print(dumpMachoToFile(debugger, info[0], info[1], entryAddr_int))
+                    utils.SLOG("fix main addr:" + hex(entryAddr_int))
+                    print(dump_macho_to_file(debugger, info[0], info[1], entryAddr_int))
                     continue
-                print(dumpMachoToFile(debugger, info[0], info[1]))
+                print(dump_macho_to_file(debugger, info[0], info[1]))
     return '\n\n[*] Developed By xia0@2019'
-
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
 
 def generate_option_parser():
     usage = "usage: dumpdecrypted [options] args"

@@ -4,7 +4,7 @@
 # xia0LLDB
 #
 # Created by Lakr Aream on 3/4/20.
-# Copyright © 2020 Lakr Aream. All rights reserved.
+# Copyright 2020 Lakr Aream. All rights reserved.
 #
 
 import os
@@ -18,7 +18,7 @@ def envtest_inXcode():
         return False
     
 # A summary to tell if we need to disable color output
-def shouldEnableColorOutput():
+def should_enable_color_output():
     sig1 = envtest_inXcode()
     if sig1:
         return False
@@ -49,12 +49,12 @@ def _attrStr(msg, color='black'):
     return clr + msg + ('\x1b\x5b39m' if clr == 'yellow' else '\033[0m')
 
 # Get attr if needed
-def attrStr(msg, color='black'):
-    if shouldEnableColorOutput():
+def attr_str(msg, color='black'):
+    if should_enable_color_output():
         return _attrStr(msg, color)
     return msg
 
 # Letting our user to know about it
-def bootstrapNotice():
-    if not shouldEnableColorOutput():
+def bootstrap_notice():
+    if not should_enable_color_output():
         print("[xia0LLDB] * Disabling color in output due to Xcode detected")

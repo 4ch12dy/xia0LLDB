@@ -17,6 +17,7 @@ import shlex
 import optparse
 import json
 import re
+import utils
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -43,7 +44,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     
     return
 
-def patchPtrace(debugger):
+def patch_ptrace(debugger):
     command_script = '' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
@@ -252,9 +253,9 @@ def patchPtrace(debugger):
     '''
 
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return utils.hex_int_in_str(retStr)
 
-def getTextSegmentAddr(debugger):
+def get_text_segment(debugger):
     command_script = '@import Foundation;' 
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
@@ -366,9 +367,9 @@ def getTextSegmentAddr(debugger):
     ret
     '''
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return utils.hex_int_in_str(retStr)
 
-def lookupSVCIns(debugger, startAddr, endAddr):
+def lookup_svc_insn(debugger, startAddr, endAddr):
     command_script = '@import Foundation;\n'
     command_script += 'uint64_t text_start = {};uint64_t text_end = {};\n'.format(startAddr, endAddr)
     command_script += r'''
@@ -391,7 +392,7 @@ def lookupSVCIns(debugger, startAddr, endAddr):
     retStr
     '''
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return utils.hex_int_in_str(retStr)
 
 def xia0Hook(debugger, svcAddr):
     command_script = '@import Foundation;\n'
@@ -703,17 +704,17 @@ def xia0Hook(debugger, svcAddr):
     retStr
     '''
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return utils.hex_int_in_str(retStr)
 
 def debugme(debugger):
-    print("[*] start patch ptrace funtion to bypass antiDebug")
-    patchPtrace(debugger)
-    print("[+] success ptrace funtion to bypass antiDebug")
+    utils.ILOG("start patch ptrace funtion to bypass antiDebug")
+    patch_ptrace(debugger)
+    utils.SLOG("success ptrace funtion to bypass antiDebug")
 
-    print("[*] start patch svc ins to bypass antiDebug")
+    utils.ILOG("start patch svc ins to bypass antiDebug")
     # get text segment start/end address 
     
-    ret = getTextSegmentAddr(debugger)
+    ret = get_text_segment(debugger)
     # remove " \n"
     ret = ret.strip()
     ret = ret[1:-1]
@@ -721,7 +722,7 @@ def debugme(debugger):
     textAddrs = ret.split(',')
 
     if len(textAddrs) < 2:
-        print("[-] failed to get text segment:" + str(textAddrs))
+        utils.ELOG("failed to get text segment:" + str(textAddrs))
         return
 
     textStart = ret.split(',')[0]
@@ -729,46 +730,33 @@ def debugme(debugger):
     textStart = textStart.strip()
     textEnd = textEnd.strip()
 
-    print("[+] get text segment start address:{} and end address:{}".format(textStart, textEnd))
+    utils.SLOG("get text segment start address:{} and end address:{}".format(textStart, textEnd))
     
     # lookup svc ins go through all text code
-    ret = lookupSVCIns(debugger, textStart, textEnd)
+    ret = lookup_svc_insn(debugger, textStart, textEnd)
 
     if "<object returned empty description>" in ret:
-        print("[*] not found svc ins, so don't need patch")
+        utils.ILOG("not found svc ins, so don't need patch")
         return
     
     svcAddrs = ret.strip()
     svcAddrs = svcAddrs.split()
 
     if len(svcAddrs) < 1:
-        print("[-] not found svc ins, so don't need patch")
+        utils.ELOG("not found svc ins, so don't need patch")
         return
 
     for svcAddr in svcAddrs:
-        print("[+] found svc address:{}".format(svcAddr))
-        print("[*] start hook svc at address:{}".format(svcAddr))
+        utils.SLOG("found svc address:{}".format(svcAddr))
+        utils.ILOG("start hook svc at address:{}".format(svcAddr))
         ret = xia0Hook(debugger, svcAddr)
         if ret:
-            print("[+] success hook svc at address:{}".format(svcAddr))
+            utils.SLOG("success hook svc at address:{}".format(svcAddr))
 
 
-    print("[*] all patch done")
+    utils.ILOG("all patch done")
 
     return
-
-def hexIntInStr(needHexStr):
-
-    def handler(reobj):
-        intvalueStr = reobj.group(0)
-        
-        r = hex(int(intvalueStr))
-        return r
-
-    # pylint: disable=anomalous-backslash-in-string
-    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
-
-    return re.sub(pattern, handler, needHexStr, flags = 0)
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()
@@ -781,13 +769,6 @@ def exeScript(debugger,command_script):
             
     response = res.GetOutput()
     return response
-
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
 
 def generate_option_parser():
     usage = "debugme"

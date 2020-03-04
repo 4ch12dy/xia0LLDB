@@ -22,8 +22,7 @@ import subprocess
 import shlex
 import optparse
 import re
-import xia0
-import choose
+import utils
 
 def __lldb_init_module (debugger, dict):
     debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
@@ -133,12 +132,12 @@ def get_class_method_address(class_name, method_name):
 def get_instance_method_address(class_name, method_name):
     frame = get_selected_frame()
     class_addr = frame.EvaluateExpression("(Class)NSClassFromString(@\"%s\")" % class_name).GetValueAsUnsigned()
-    print('[+] found class address:0x%x' % class_addr)
+    utils.SLOG('found class address:0x%x' % class_addr)
     if class_addr == 0:
         return 0
 
     sel_addr = frame.EvaluateExpression("(SEL)NSSelectorFromString(@\"%s\")" % method_name).GetValueAsUnsigned()
-    print('[+] found selector address:0x%x' % sel_addr)
+    utils.SLOG('found selector address:0x%x' % sel_addr)
     has_method = frame.EvaluateExpression("(BOOL)class_respondsToSelector(%d, %d)" % (class_addr, sel_addr)).GetValueAsUnsigned()
     if not has_method:
         return 0
@@ -147,31 +146,7 @@ def get_instance_method_address(class_name, method_name):
     
     return method_addr.GetValueAsUnsigned()
 
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def exeCommand(debugger, command):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand(command, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def getAllMethodAddressOfClass(debugger, classname):
+def get_all_method_address_of_class(debugger, classname):
 
     command_script = 'const char* className = "' + classname + '";' 
 
@@ -206,10 +181,10 @@ def getAllMethodAddressOfClass(debugger, classname):
     }
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
+    retStr = utils.exe_script(debugger, command_script)
     return retStr
 
-def getMachODATAModInitFirstAddress(debugger):
+def get_macho_mod_init_first_func(debugger):
     command_script = '@import Foundation;'
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
@@ -310,10 +285,10 @@ def getMachODATAModInitFirstAddress(debugger):
 
     ret
     '''
-    retStr = exeScript(debugger, command_script)
-    return choose.hexIntInStr(retStr)
+    retStr = utils.exe_script(debugger, command_script)
+    return utils.hex_int_in_str(retStr)
 
-def getMachOEntryOffset(debugger):
+def get_macho_entry_offset(debugger):
     command_script = '@import Foundation;' 
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
@@ -425,10 +400,10 @@ def getMachOEntryOffset(debugger):
 
     ret
     '''
-    retStr = exeScript(debugger, command_script)
+    retStr = utils.exe_script(debugger, command_script)
     return retStr
 
-def getMainImagePath(debugger):
+def get_main_image_path(debugger):
     command_script = '@import Foundation;' 
     command_script += r'''
 
@@ -439,10 +414,10 @@ def getMainImagePath(debugger):
     
     path
     '''
-    retStr = exeScript(debugger, command_script)
+    retStr = utils.exe_script(debugger, command_script)
     return retStr
 
-def getProcessModuleSlide(debugger, modulePath):
+def get_process_module_slide(debugger, modulePath):
     command_script = '@import Foundation;' 
     command_script += r'''
     uint32_t count = (uint32_t)_dyld_image_count();
@@ -476,7 +451,7 @@ def getProcessModuleSlide(debugger, modulePath):
 
     slideStr
     '''
-    slide = exeScript(debugger, command_script)
+    slide = utils.exe_script(debugger, command_script)
     return slide
 
 def xbr(debugger, command, result, dict):
@@ -499,23 +474,23 @@ def xbr(debugger, command, result, dict):
         else:
             targetAddr_int = int(targetAddr, 10)
           
-        print("[*] breakpoint at address:{}".format(xia0.ILOG(hex(targetAddr_int))))
+        utils.ILOG("breakpoint at address:{}".format(hex(targetAddr_int)))
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % targetAddr_int)
         return
 
     if options.entryAddress:
         if options.entryAddress == "main":
-            entryAddrStr = getMachOEntryOffset(debugger)
+            entryAddrStr = get_macho_entry_offset(debugger)
             entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
-            print("[*] breakpoint at main function:{}".format(xia0.ILOG(hex(entryAddr_int))))
+            utils.ILOG("breakpoint at main function:{}".format(hex(entryAddr_int)))
             lldb.debugger.HandleCommand ('breakpoint set --address %d' % entryAddr_int)
         elif options.entryAddress == "init":
-            initFunAddrStr = getMachODATAModInitFirstAddress(debugger)
+            initFunAddrStr = get_macho_mod_init_first_func(debugger)
             initFunAddr_int = int(initFunAddrStr.strip()[1:-1], 16)
-            print("[*] breakpoint at mod int first function:{}".format(xia0.ILOG(hex(initFunAddr_int))))
+            utils.ILOG("breakpoint at mod int first function:{}".format(hex(initFunAddr_int)))
             lldb.debugger.HandleCommand ('breakpoint set --address %d' % initFunAddr_int)
         else:
-            print(xia0.ELOG("[*] you should specail the -E options:[main/init]"))
+            print(utils.ELOG("you should specail the -E options:[main/init]"))
 
         return
         
@@ -525,9 +500,9 @@ def xbr(debugger, command, result, dict):
 
         if options.modulePath:
             modulePath = options.modulePath
-            print("[*] you specail the module:" + xia0.ILOG(modulePath))
+            utils.ILOG("you specail the module:" + modulePath)
         else:
-            print("[*] you not specail the module, default is main module")
+            utils.ILOG("you not specail the module, default is main module")
             modulePath = None
 
         targetAddr = args[0]
@@ -537,15 +512,15 @@ def xbr(debugger, command, result, dict):
         else:
             targetAddr_int = int(targetAddr, 10)
 
-        moduleSlide = getProcessModuleSlide(debugger, modulePath)
+        moduleSlide = get_process_module_slide(debugger, modulePath)
         if "error" in moduleSlide:
-            print("[-] error in oc script # " + moduleSlide.strip())
+            utils.ELOG("error in oc script # " + moduleSlide.strip())
             if modulePath:
                 targetImagePath = modulePath
             else:               
-                mainImagePath = getMainImagePath(debugger)
+                mainImagePath = get_main_image_path(debugger)
                 if "no value available" in  mainImagePath or "error" in mainImagePath:
-                    ret = exeCommand(debugger, "target list")
+                    ret = utils.exe_command(debugger, "target list")
                     # pylint: disable=anomalous-backslash-in-string
                     pattern = '/.*\('
                     match = re.search(pattern, ret) # TODO: more strict
@@ -554,7 +529,7 @@ def xbr(debugger, command, result, dict):
                         found = found.split("(")[0]
                         found = found.strip()
                     else:
-                        print("[-] failed to auto get main module, use -m option")
+                        utils.ELOG("failed to auto get main module, use -m option")
                         return
  
                     mainImagePath = found
@@ -564,16 +539,16 @@ def xbr(debugger, command, result, dict):
 
                 targetImagePath = mainImagePath
 
-            ret = exeCommand(debugger, "im li -o -f")
+            ret = utils.exe_command(debugger, "im li -o -f")
             pattern = '0x.*?' + targetImagePath.replace("\"", "")
             match = re.search(pattern, ret) # TODO: more strict
             if match:
                 found = match.group(0)
             else:
-                print("[-] not found image:"+targetImagePath)
+                utils.ELOG("not found image:"+targetImagePath)
                 return
             moduleSlide = found.split()[0]
-            print("[*] use \"im li -o -f\" cmd to get image slide:"+moduleSlide)
+            utils.ILOG("use \"im li -o -f\" cmd to get image slide:"+moduleSlide)
             moduleSlide = int(moduleSlide, 16)
 
         else:
@@ -581,7 +556,7 @@ def xbr(debugger, command, result, dict):
             
         brAddr = moduleSlide + targetAddr_int
 
-        print("[*] ida's address:{} module slide:{} target breakpoint address:{}".format(xia0.ILOG(hex(targetAddr_int)), xia0.ILOG(hex(moduleSlide)), xia0.ILOG(hex(brAddr))))
+        utils.ILOG("ida's address:{} module slide:{} target breakpoint address:{}".format(hex(targetAddr_int), hex(moduleSlide), hex(brAddr)))
         
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % brAddr)
         return
@@ -589,7 +564,7 @@ def xbr(debugger, command, result, dict):
     # check is breakpoint at all methods address(IMP) for given classname
     if is_br_all_cmd(args):
         classname = args[0]
-        ret = getAllMethodAddressOfClass(debugger, classname)
+        ret = get_all_method_address_of_class(debugger, classname)
 
         addrArr = ret.split('-')[:-1]
 
@@ -611,7 +586,7 @@ def xbr(debugger, command, result, dict):
     class_name = get_class_name(arg_)
     method_name = get_method_name(arg_)
 #    xlog = 'className:'+ str(class_name) + '\tmethodName:' + str(method_name)
-    print("[*] className:{} methodName:{}".format(class_name, method_name))
+    utils.ILOG("className:{} methodName:{}".format(class_name, method_name))
     # print class_name, method_name
     address = 0
     if is_class_method(arg_):
@@ -619,11 +594,11 @@ def xbr(debugger, command, result, dict):
     else:
         address = get_instance_method_address(class_name, method_name)
 
-    print('[+] found method address:0x%x' % address)
+    utils.SLOG('found method address:0x%x' % address)
     if address:
         lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
     else:
-        print("[-] fail, please check the arguments")
+        utils.ELOG("fail, please check the arguments")
 
 def generate_option_parser():
     usage = "usage: xbr [-a/-m/-E] args"

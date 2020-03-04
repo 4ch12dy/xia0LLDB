@@ -18,6 +18,7 @@ import shlex
 import optparse
 import json
 import re
+import utils
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -44,17 +45,17 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         if options.patchAddress:
             patch_addr = int(options.patchAddress, 16)
         else:
-            ret = exeCommand(debugger, "p/x $pc")
+            ret = utils.exe_command(debugger, "p/x $pc")
             ret = ret.strip()
             pattern = '0x[0-9a-f]+'
             match = re.search(pattern, ret)
             if match:
                 found = match.group(0)
             else:
-                print("[-] not get address:"+ret)
+                utils.ELOG("not get address:"+ret)
                 return
 
-            print("[*] you not set patch address, default is current pc address:{}".format(found))
+            utils.ILOG("you not set patch address, default is current pc address:{}".format(found))
             patch_addr = int(found, 16)
         
         patch_ins = options.patchInstrument
@@ -73,133 +74,6 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         result.AppendMessage("[-] args error, check it !")
 
     return
-
-def exeCommand(debugger, command):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand(command, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-
-def getTextSegmentAddr(debugger):
-    command_script = '@import Foundation;' 
-    command_script += r'''
-    //NSMutableString* retStr = [NSMutableString string];
-
-    #define MH_MAGIC_64 0xfeedfacf 
-    #define LC_SEGMENT_64   0x19
-    typedef int                     integer_t;
-    typedef integer_t       cpu_type_t;
-    typedef integer_t       cpu_subtype_t;
-    typedef integer_t       cpu_threadtype_t;
-
-    struct mach_header_64 {
-        uint32_t    magic;      /* mach magic number identifier */
-        cpu_type_t  cputype;    /* cpu specifier */
-        cpu_subtype_t   cpusubtype; /* machine specifier */
-        uint32_t    filetype;   /* type of file */
-        uint32_t    ncmds;      /* number of load commands */
-        uint32_t    sizeofcmds; /* the size of all the load commands */
-        uint32_t    flags;      /* flags */
-        uint32_t    reserved;   /* reserved */
-    };
-
-    struct load_command {
-        uint32_t cmd;       /* type of load command */
-        uint32_t cmdsize;   /* total size of command in bytes */
-    };
-
-    typedef int             vm_prot_t;
-    struct segment_command_64 { /* for 64-bit architectures */
-        uint32_t    cmd;        /* LC_SEGMENT_64 */
-        uint32_t    cmdsize;    /* includes sizeof section_64 structs */
-        char        segname[16];    /* segment name */
-        uint64_t    vmaddr;     /* memory address of this segment */
-        uint64_t    vmsize;     /* memory size of this segment */
-        uint64_t    fileoff;    /* file offset of this segment */
-        uint64_t    filesize;   /* amount to map from the file */
-        vm_prot_t   maxprot;    /* maximum VM protection */
-        vm_prot_t   initprot;   /* initial VM protection */
-        uint32_t    nsects;     /* number of sections in segment */
-        uint32_t    flags;      /* flags */
-    };
-
-    struct section_64 { /* for 64-bit architectures */
-        char        sectname[16];   /* name of this section */
-        char        segname[16];    /* segment this section goes in */
-        uint64_t    addr;       /* memory address of this section */
-        uint64_t    size;       /* size in bytes of this section */
-        uint32_t    offset;     /* file offset of this section */
-        uint32_t    align;      /* section alignment (power of 2) */
-        uint32_t    reloff;     /* file offset of relocation entries */
-        uint32_t    nreloc;     /* number of relocation entries */
-        uint32_t    flags;      /* flags (section type and attributes)*/
-        uint32_t    reserved1;  /* reserved (for offset or index) */
-        uint32_t    reserved2;  /* reserved (for count or sizeof) */
-        uint32_t    reserved3;  /* reserved */
-    };
-
-    int x_offset = 0;
-    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
-
-    if(header->magic != MH_MAGIC_64) {
-        return ;
-    }
-
-    x_offset = sizeof(struct mach_header_64);
-    int ncmds = header->ncmds;
-    uint64_t textStart = 0;
-    uint64_t textEnd = 0;
-
-    while(ncmds--) {
-        /* go through all load command to find __TEXT segment*/
-        struct load_command * lcp = (struct load_command *)((uint8_t*)header + x_offset);
-        x_offset += lcp->cmdsize;
-        
-        if(lcp->cmd == LC_SEGMENT_64) {
-            struct segment_command_64 * curSegment = (struct segment_command_64 *)lcp;
-            struct section_64* curSection = (struct section_64*)((uint8_t*)curSegment + sizeof(struct segment_command_64));
-            
-            // check current section of segment is __TEXT?
-            if(!strcmp(curSection->segname, "__TEXT") && !strcmp(curSection->sectname, "__text")){
-                uint64_t memAddr = curSection->addr;
-               
-                textStart = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
-                textEnd = textStart + curSection->size;
-                /*
-                [retStr appendString:@" "];
-                [retStr appendString:(id)[@(textStart) stringValue]];
-                [retStr appendString:@" , "];
-                [retStr appendString:(id)[@(textEnd) stringValue]];
-                */
-                break;
-            }
-        }
-    }
-    char ret[50];
-
-    char textStartAddrStr[20];
-    sprintf(textStartAddrStr, "0x%016lx", textStart);
-
-    char textEndAddrStr[20];
-    sprintf(textEndAddrStr, "0x%016lx", textEnd);
-
-
-    char* splitStr = ",";
-    strcpy(ret,textStartAddrStr);
-    strcat(ret,splitStr);
-    strcat(ret,textEndAddrStr);
-
-    ret
-    '''
-    retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
 
 def patch_code(debugger, addr, ins, count):
     command_script = '@import Foundation;\n'
@@ -406,8 +280,8 @@ def patch_code(debugger, addr, ins, count):
     [retStr appendString:@"patch done."];
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    retStr = utils.exe_script(debugger, command_script)
+    return utils.hex_int_in_str(retStr)
 
 def is_raw_data(data):
 
@@ -421,21 +295,21 @@ def is_raw_data(data):
 
 def patcher(debugger, ins, addr, size):
     if is_raw_data(ins):
-        print("[*] detect you manual set ins data:{}".format(ins))
-        print("[*] start patch text at address:{} size:{} to ins data:{}".format(hex(addr), size, ins))
+        utils.ILOG("detect you manual set ins data:{}".format(ins))
+        utils.ILOG("start patch text at address:{} size:{} to ins data:{}".format(hex(addr), size, ins))
         patch_code(debugger, hex(addr), ins, size)
         return "[x] power by xia0@2019"
 
     supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2', 'mov1':'0x20, 0x00, 0x80, 0xd2'}
     if ins not in supportInsList.keys():
-        print("[-] patcher not support this ins type:{}".format(ins))
+        utils.ELOG("patcher not support this ins type:{}".format(ins))
         return "[x] power by xia0@2019"
 
-    print("[*] start patch text at address:{} size:{} to ins:\"{}\" and data:{}".format(hex(addr), size, ins, supportInsList[ins]))
+    utils.ILOG("start patch text at address:{} size:{} to ins:\"{}\" and data:{}".format(hex(addr), size, ins, supportInsList[ins]))
     
     # for i in range(size):
     #     patch_code(debugger, hex(curPatchAddr), supportInsList[ins])
-    #     print("[+] current patch address:{} patch done".format(hex(curPatchAddr)))
+    #     utils.SLOG("current patch address:{} patch done".format(hex(curPatchAddr)))
     #     curPatchAddr += 4
     ins_data = ""
     for i in range(size):
@@ -445,43 +319,11 @@ def patcher(debugger, ins, addr, size):
 
     build_ins_data = "{" + ins_data + "}"
 
-    print("[*] make ins data:\n{}".format(build_ins_data))
+    utils.ILOG("make ins data:\n{}".format(build_ins_data))
 
     patch_code(debugger, hex(addr), build_ins_data, size)
-    print("[+] patch done")
+    utils.SLOG("patch done")
     return "[x] power by xia0@2019"
-
-def hexIntInStr(needHexStr):
-
-    def handler(reobj):
-        intvalueStr = reobj.group(0)
-        
-        r = hex(int(intvalueStr))
-        return r
-
-    # pylint: disable=anomalous-backslash-in-string
-    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
-
-    return re.sub(pattern, handler, needHexStr, flags = 0)
-
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
 
 def generate_option_parser():
     usage = "patcher"
