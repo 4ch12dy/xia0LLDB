@@ -1,3 +1,5 @@
+ #! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -28,13 +30,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
     try:
-        (options, args) = parser.parse_args(command_args)
+        (_, _) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
         
-    target = exe_ctx.target
-    thread = exe_ctx.thread
+    _ = exe_ctx.target
+    _ = exe_ctx.thread
     
     # result.AppendMessage(str('[x] happy debugging~ kill antiDebug by xia0@2019'))
 
@@ -705,6 +707,7 @@ def hexIntInStr(needHexStr):
         r = hex(int(intvalueStr))
         return r
 
+    # pylint: disable=anomalous-backslash-in-string
     pattern = '(?<=\s)[0-9]{1,}(?=\s)'
 
     return re.sub(pattern, handler, needHexStr, flags = 0)

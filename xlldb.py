@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -11,28 +13,30 @@
 
 import lldb
 import os
+import utils
+import colorme
 
 def banner():
-    xia0LLDB = '''
-      _        ___  _      _      _____  ____   
-     (_)      / _ \| |    | |    |  __ \|  _ \  
-__  ___  __ _| | | | |    | |    | |  | | |_) | 
-\ \/ / |/ _` | | | | |    | |    | |  | |  _ <  
- >  <| | (_| | |_| | |____| |____| |__| | |_) | 
-/_/\_\_|\__,_|\___/|______|______|_____/|____/   v1.1'''
-
+    # pylint: disable
+    xia0LLDB = r'''
+           https://github.com/4ch12dy/xia0LLDB
+          Welcome to xia0LLDB - Python3 Edition
+          ,--.          ,--.  ,--.   ,--.   ,------.  ,-----.   
+,--.  ,--.`--' ,--,--. /    \ |  |   |  |   |  .-.  \ |  |) /_  
+ \  `'  / ,--.' ,-.  ||  ()  ||  |   |  |   |  |  \  :|  .-.  \ 
+ /  /.  \ |  |\ '-'  | \    / |  '--.|  '--.|  '--'  /|  '--' /  
+'--'  '--'`--' `--`--'  `--'  `-----'`-----'`-------' `------'   
+'''
     return xia0LLDB
-
-def print_usage():
-    print("")
-    print("usage: try \"command -h\" to help, see more: https://github.com/4ch12dy/xia0LLDB")
 
 def __lldb_init_module(debugger, internal_dict):
     print(banner())
-    print_usage()
+    colorme.bootstrapNotice()
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)
+    print("[xia0LLDB] + Loading all scripts from " + dir_name)
     load_python_scripts_dir(dir_name)
+    print("[xia0LLDB] * Finished *")
 
 def load_python_scripts_dir(dir_name):
     this_files_basename = os.path.basename(__file__)

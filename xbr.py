@@ -1,3 +1,5 @@
+ #! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -16,11 +18,12 @@ specail thanks to xia0z & Proteas
 '''
 
 import lldb
-import commands
+import subprocess
 import shlex
 import optparse
 import re
-from xia0 import *
+import xia0
+import choose
 
 def __lldb_init_module (debugger, dict):
     debugger.HandleCommand('command script add -f xbr.xbr xbr -h "set breakpoint on ObjC Method"')
@@ -40,7 +43,9 @@ def is_command_valid(args):
     if len(arg) == 0:
         return False
 
-    ret = re.match('^[+-]\[.+ .+\]$', arg) # TODO: more strict
+    # pylint: disable=anomalous-backslash-in-string
+    parm = '^[+-]\[.+ .+\]$'
+    ret = re.match(parm, arg) # TODO: more strict
     if not ret:
         return False
 
@@ -75,14 +80,18 @@ def is_just_address_cmd(args):
     return True
 
 def get_class_name(arg):
-    match = re.search('(?<=\[)[^\[].*[^ ](?= +)', arg) # TODO: more strict
+    # pylint: disable=anomalous-backslash-in-string
+    parm = '(?<=\[)[^\[].*[^ ](?= +)'
+    match = re.search(parm, arg) # TODO: more strict
     if match:
         return match.group(0)
     else:
         return None
 
 def get_method_name(arg):
-    match = re.search('(?<= )[^ ].*[^\]](?=\]+)', arg) # TODO: more strict
+    # pylint: disable=anomalous-backslash-in-string
+    parm = '(?<= )[^ ].*[^\]](?=\]+)'
+    match = re.search(parm, arg) # TODO: more strict
     if match:
         return match.group(0)
     else:
@@ -107,7 +116,7 @@ def get_selected_frame():
     return frame
 
 def get_class_method_address(class_name, method_name):
-    frame = get_selected_frame();
+    frame = get_selected_frame()
     class_addr = frame.EvaluateExpression("(Class)object_getClass((Class)NSClassFromString(@\"%s\"))" % class_name).GetValueAsUnsigned()
     if class_addr == 0:
         return 0
@@ -122,7 +131,7 @@ def get_class_method_address(class_name, method_name):
     return method_addr.GetValueAsUnsigned()
 
 def get_instance_method_address(class_name, method_name):
-    frame = get_selected_frame();
+    frame = get_selected_frame()
     class_addr = frame.EvaluateExpression("(Class)NSClassFromString(@\"%s\")" % class_name).GetValueAsUnsigned()
     print('[+] found class address:0x%x' % class_addr)
     if class_addr == 0:
@@ -302,7 +311,7 @@ def getMachODATAModInitFirstAddress(debugger):
     ret
     '''
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return choose.hexIntInStr(retStr)
 
 def getMachOEntryOffset(debugger):
     command_script = '@import Foundation;' 
@@ -490,7 +499,7 @@ def xbr(debugger, command, result, dict):
         else:
             targetAddr_int = int(targetAddr, 10)
           
-        print("[*] breakpoint at address:{}".format(ILOG(hex(targetAddr_int))))
+        print("[*] breakpoint at address:{}".format(xia0.ILOG(hex(targetAddr_int))))
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % targetAddr_int)
         return
 
@@ -498,15 +507,15 @@ def xbr(debugger, command, result, dict):
         if options.entryAddress == "main":
             entryAddrStr = getMachOEntryOffset(debugger)
             entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
-            print("[*] breakpoint at main function:{}".format(ILOG(hex(entryAddr_int))))
+            print("[*] breakpoint at main function:{}".format(xia0.ILOG(hex(entryAddr_int))))
             lldb.debugger.HandleCommand ('breakpoint set --address %d' % entryAddr_int)
         elif options.entryAddress == "init":
             initFunAddrStr = getMachODATAModInitFirstAddress(debugger)
             initFunAddr_int = int(initFunAddrStr.strip()[1:-1], 16)
-            print("[*] breakpoint at mod int first function:{}".format(ILOG(hex(initFunAddr_int))))
+            print("[*] breakpoint at mod int first function:{}".format(xia0.ILOG(hex(initFunAddr_int))))
             lldb.debugger.HandleCommand ('breakpoint set --address %d' % initFunAddr_int)
         else:
-            print(ELOG("[*] you should specail the -E options:[main/init]"))
+            print(xia0.ELOG("[*] you should specail the -E options:[main/init]"))
 
         return
         
@@ -516,7 +525,7 @@ def xbr(debugger, command, result, dict):
 
         if options.modulePath:
             modulePath = options.modulePath
-            print("[*] you specail the module:" + ILOG(modulePath))
+            print("[*] you specail the module:" + xia0.ILOG(modulePath))
         else:
             print("[*] you not specail the module, default is main module")
             modulePath = None
@@ -537,6 +546,7 @@ def xbr(debugger, command, result, dict):
                 mainImagePath = getMainImagePath(debugger)
                 if "no value available" in  mainImagePath or "error" in mainImagePath:
                     ret = exeCommand(debugger, "target list")
+                    # pylint: disable=anomalous-backslash-in-string
                     pattern = '/.*\('
                     match = re.search(pattern, ret) # TODO: more strict
                     if match:
@@ -571,7 +581,7 @@ def xbr(debugger, command, result, dict):
             
         brAddr = moduleSlide + targetAddr_int
 
-        print("[*] ida's address:{} module slide:{} target breakpoint address:{}".format(ILOG(hex(targetAddr_int)), ILOG(hex(moduleSlide)), ILOG(hex(brAddr))))
+        print("[*] ida's address:{} module slide:{} target breakpoint address:{}".format(xia0.ILOG(hex(targetAddr_int)), xia0.ILOG(hex(moduleSlide)), xia0.ILOG(hex(brAddr))))
         
         lldb.debugger.HandleCommand ('breakpoint set --address %d' % brAddr)
         return
@@ -594,7 +604,7 @@ def xbr(debugger, command, result, dict):
 
 
     if not is_command_valid(raw_args):
-        print 'please specify the param, for example: "-[UIView initWithFrame:]"'
+        print('please specify the param, for example: "-[UIView initWithFrame:]"')
         return
 
     arg_ = raw_args[0]
