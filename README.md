@@ -10,7 +10,7 @@
 
 **Welcome to xia0LLDB - Python3 Edition**
 
-**Thanks [@Lakr](https://twitter.com/Lakr233) port it to Python3 !**
+**Thanks [@Lakr](https://twitter.com/Lakr233) so much for porting it to Python3 !**
 
 ### Install 
 
