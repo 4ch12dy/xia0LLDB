@@ -18,6 +18,7 @@ import optparse
 import json
 import re
 import colorme
+import utils
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -266,48 +267,9 @@ def choose(debugger, classname):
 
     retStr
     '''
-    retStr = exeScript(debugger, command_script)
-    return colorme.attrStr(hexIntInStr(retStr), 'green')
-
-
-def parray(debugger, command, result, dict):
-    args = shlex.split(command)
-    va = lldb.frame.FindVariable(args[0])
-    for i in range(0, int(args[1])):
-        print(va.GetChildAtIndex(i, 0, 1))
-
-def hexIntInStr(needHexStr):
-
-    def handler(reobj):
-        intvalueStr = reobj.group(0)
-        
-        r = hex(int(intvalueStr))
-        return r
-
-    # pylint: disable=anomalous-backslash-in-string
-    pattern = '(?<=\s)[0-9]{1,}(?=\s)'
-
-    return re.sub(pattern, handler, needHexStr, flags = 0)
+    retStr = utils.exe_script(debugger, command_script)
+    return colorme.attr_str(utils.hex_int_in_str(retStr), 'green')
     
-def exeScript(debugger,command_script):
-    res = lldb.SBCommandReturnObject()
-    interpreter = debugger.GetCommandInterpreter()
-    interpreter.HandleCommand('exp -lobjc -O -- ' + command_script, res)
-
-    if not res.HasResult():
-        # something error
-        return res.GetError()
-            
-    response = res.GetOutput()
-    return response
-
-def generateOptions():
-    expr_options = lldb.SBExpressionOptions()
-    expr_options.SetUnwindOnError(True)
-    expr_options.SetLanguage (lldb.eLanguageTypeObjC_plus_plus)
-    expr_options.SetCoerceResultToId(False)
-    return expr_options
-
 def generate_option_parser():
     usage = "usage: choose className"
     parser = optparse.OptionParser(usage=usage, prog="lookup")
