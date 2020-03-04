@@ -31,7 +31,7 @@ def banner():
 
 def __lldb_init_module(debugger, internal_dict):
     print(banner())
-    print("[xia0LLDB] * version: v2.0 ")
+    print("[xia0LLDB] * Version: v2.0 ")
     colorme.bootstrap_notice()
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)

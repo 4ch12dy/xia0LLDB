@@ -25,7 +25,7 @@ def should_enable_color_output():
     return True
 
 # By xia0, used to append color attr to terminal
-def _attrStr(msg, color='black'):      
+def _attr_str(msg, color='black'):      
     clr = {
     'cyan' : '\033[36m',
     'grey' : '\033[2m',
@@ -51,7 +51,7 @@ def _attrStr(msg, color='black'):
 # Get attr if needed
 def attr_str(msg, color='black'):
     if should_enable_color_output():
-        return _attrStr(msg, color)
+        return _attr_str(msg, color)
     return msg
 
 # Letting our user to know about it
