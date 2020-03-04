@@ -1,3 +1,5 @@
+ #! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -14,7 +16,9 @@ import os
 import shlex
 import optparse
 import json
-import xutil
+
+import choose
+import colorme
 
 BLOCK_JSON_FILE = None
 
@@ -41,7 +45,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     parser = generate_option_parser()
     
     try:
-        (options, args) = parser.parse_args(command_args)
+        (options, _) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
@@ -57,13 +61,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     result.AppendMessage('  ==========================================xia0LLDB===========================================')
     if options.file:
         BLOCK_JSON_FILE = str(options.file)
-        result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+        result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr(BLOCK_JSON_FILE, 'redd')))
     else:
         if BLOCK_JSON_FILE:
-            result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr(BLOCK_JSON_FILE, 'redd')))
+            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr(BLOCK_JSON_FILE, 'redd')))
             pass
         else:
-            result.AppendMessage('  BlockSymbolFile    {}'.format(attrStr('Not Set The Block Symbol Json File, Try \'sbt -f\'', 'redd')))
+            result.AppendMessage('  BlockSymbolFile    {}'.format(colorme.attrStr('Not Set The Block Symbol Json File, Try \'sbt -f\'', 'redd')))
             pass
     result.AppendMessage('  =============================================================================================')
 
@@ -115,46 +119,18 @@ def symbolishStackTraceFrame(debugger,target, thread):
                         response = one
                     response = checkIfAnalysisError(response)
                     metholdName = str(response).replace("\n","")
-                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol}\n'.format(num=idx, f_addr=attrStr(str(hex(file_addr)), 'cyan'), m_addr=attrStr(hex(load_addr),'grey'),mod=attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=attrStr(metholdName, 'green'))
+                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol}\n'.format(num=idx, f_addr=colorme.attrStr(str(hex(file_addr)), 'cyan'), m_addr=colorme.attrStr(hex(load_addr),'grey'),mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=colorme.attrStr(metholdName, 'green'))
             else:
                 metholdName = f.addr.symbol.name
-                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol} + {offset} \n'.format(num=idx, f_addr=attrStr(str(hex(file_addr)), 'cyan'), m_addr=attrStr(hex(load_addr),'grey'),mod=attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=metholdName, offset=symbol_offset)
+                frame_string += '  frame #{num}: [file:{f_addr} mem:{m_addr}] {mod}`{symbol} + {offset} \n'.format(num=idx, f_addr=colorme.attrStr(str(hex(file_addr)), 'cyan'), m_addr=colorme.attrStr(hex(load_addr),'grey'),mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'), symbol=metholdName, offset=symbol_offset)
         else:
             frame_string += '  frame #{num}: {addr} {mod}`{func} at {file}\n'.format(
-                    num=idx, addr=hex(load_addr), mod=attrStr(str(f.addr.module.file.basename), 'yellow'),
+                    num=idx, addr=hex(load_addr), mod=colorme.attrStr(str(f.addr.module.file.basename), 'yellow'),
                     func='%s [inlined]' % function if f.IsInlined() else function,
                     file=f.addr.symbol.name)
         
         idx = idx + 1
     return frame_string
-
-def attrStr(msg, color='black'):   
-    global IS_NO_COLOR_OUTPUT
-
-    if IS_NO_COLOR_OUTPUT:
-        return msg
-    
-    clr = {
-    'cyan' : '\033[36m',
-    'grey' : '\033[2m',
-    'blink' : '\033[5m',
-    'redd' : '\033[41m',
-    'greend' : '\033[42m',
-    'yellowd' : '\033[43m',
-    'pinkd' : '\033[45m',
-    'cyand' : '\033[46m',
-    'greyd' : '\033[100m',
-    'blued' : '\033[44m',
-    'whiteb' : '\033[7m',
-    'pink' : '\033[95m',
-    'blue' : '\033[94m',
-    'green' : '\033[92m',
-    'yellow' : '\x1b\x5b33m',
-    'red' : '\033[91m',
-    'bold' : '\033[1m',
-    'underline' : '\033[4m'
-    }[color]
-    return clr + msg + ('\x1b\x5b39m' if clr == 'yellow' else '\033[0m')
 
 def chooseBest(scriptRet, jsonFileRet):
     one = scriptRet.replace(" ", "")
@@ -165,7 +141,7 @@ def chooseBest(scriptRet, jsonFileRet):
         oneDis = int(one[1:].split('+')[1], 10)
         twoDis = int(two[1:].split('+')[1], 10)
 
-    except Exception,e:
+    except Exception:
         return '===[E]===:' + scriptRet
 
     if oneDis < twoDis:
@@ -181,7 +157,7 @@ def checkIfAnalysisError(frameString):
     try:
         # skip first methold type char "-/+" and turn distance to int
         dis = int(frameString_strip[1:].split('+')[1], 10)
-    except Exception,e:
+    except Exception:
         return '===[E]===:' + frameString
     
     if 'cxx_destruct' in frameString:
@@ -200,7 +176,7 @@ def findBlockSymbolFromAdress(address):
         f = open(BLOCK_JSON_FILE, 'r')
         symbolJsonArr = json.loads(f.read())
         f.close()
-    except Exception,e:
+    except Exception:
         return "ERROR in handle json file, check file path and content is correct:{}. + 0".format(BLOCK_JSON_FILE)
 
     if type(address) is int:
@@ -277,7 +253,7 @@ def getImageInfoFromAddress(debugger, address):
     retStr
     '''
     retStr = exeScript(debugger, command_script)
-    return hexIntInStr(retStr)
+    return choose.hexIntInStr(retStr)
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()

@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -16,7 +18,7 @@ import optparse
 import json
 import re
 import time
-from utils import *
+import utils
 
 def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand(
@@ -30,22 +32,22 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
     try:
-        (options, args) = parser.parse_args(command_args)
+        (options, _) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
         
-    target = exe_ctx.target
-    thread = exe_ctx.thread
+    _ = exe_ctx.target
+    _ = exe_ctx.thread
 
     if options.superX:
-        ILOG("set breakpoint at CFBundleGetMainBundle")
-        exe_cmd(debugger, "b CFBundleGetMainBundle")
+        utils.ILOG("set breakpoint at CFBundleGetMainBundle")
+        utils.exe_cmd(debugger, "b CFBundleGetMainBundle")
         time.sleep(3)
-        ILOG("will continue process and dump")
-        exe_cmd(debugger, "c")
+        utils.ILOG("will continue process and dump")
+        utils.exe_cmd(debugger, "c")
         time.sleep(2)
-        ILOG("start execute dumpdecrypted")
+        utils.ILOG("start execute dumpdecrypted")
         ret = dumpdecrypted(debugger)
     else:
         if options.modulePath and options.moduleIdx:
@@ -588,7 +590,7 @@ def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
     exeCommand(debugger, "br de -f")
     #dumpMachoToFile(debugger,)
     if modulePath and moduleIdx:
-        print dumpMachoToFile(debugger, moduleIdx, modulePath)
+        print(dumpMachoToFile(debugger, moduleIdx, modulePath))
     else:
         mainImagePath = getMainImagePath(debugger)
         appDir = os.path.dirname(mainImagePath)
@@ -612,11 +614,10 @@ def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
                     entryAddrStr = getMachOEntryOffset(debugger)
                     entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
                     print("[+] fix main addr:" + hex(entryAddr_int))
-                    print dumpMachoToFile(debugger, info[0], info[1], entryAddr_int)
+                    print(dumpMachoToFile(debugger, info[0], info[1], entryAddr_int))
                     continue
-                print dumpMachoToFile(debugger, info[0], info[1])
-
-    return "\n\n[*] Developed By xia0@2019"
+                print(dumpMachoToFile(debugger, info[0], info[1]))
+    return '\n\n[*] Developed By xia0@2019'
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()

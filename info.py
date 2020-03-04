@@ -1,3 +1,5 @@
+#! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -29,13 +31,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
     try:
-        (options, args) = parser.parse_args(command_args)
+        (options, _) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
         
-    target = exe_ctx.target
-    thread = exe_ctx.thread
+    _ = exe_ctx.target
+    _ = exe_ctx.thread
     
     if options.moduleName:
         ret = getModulInfoByName(debugger, str(options.moduleName))
@@ -229,33 +231,11 @@ def hexIntInStr(needHexStr):
         
         r = hex(int(intvalueStr))
         return r
-
+        
+    # pylint: disable=anomalous-backslash-in-string
     pattern = '(?<=\s)[0-9]{1,}(?=\s)'
 
     return re.sub(pattern, handler, needHexStr, flags = 0)  
-
-def attrStr(msg, color='black'):      
-    clr = {
-    'cyan' : '\033[36m',
-    'grey' : '\033[2m',
-    'blink' : '\033[5m',
-    'redd' : '\033[41m',
-    'greend' : '\033[42m',
-    'yellowd' : '\033[43m',
-    'pinkd' : '\033[45m',
-    'cyand' : '\033[46m',
-    'greyd' : '\033[100m',
-    'blued' : '\033[44m',
-    'whiteb' : '\033[7m',
-    'pink' : '\033[95m',
-    'blue' : '\033[94m',
-    'green' : '\033[92m',
-    'yellow' : '\x1b\x5b33m',
-    'red' : '\033[91m',
-    'bold' : '\033[1m',
-    'underline' : '\033[4m'
-    }[color]
-    return clr + msg + ('\x1b\x5b39m' if clr == 'yellow' else '\033[0m')
 
 def exeScript(debugger,command_script):
     res = lldb.SBCommandReturnObject()

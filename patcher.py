@@ -1,4 +1,6 @@
 
+#! /usr/bin/env python3
+
  #  ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ ______ 
  # |______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______|______| 
  #        _        ___  _      _      _____  ____   
@@ -29,13 +31,13 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     command_args = shlex.split(command, posix=False)
     parser = generate_option_parser()
     try:
-        (options, args) = parser.parse_args(command_args)
+        (options, _) = parser.parse_args(command_args)
     except:
         result.SetError(parser.usage)
         return
         
-    target = exe_ctx.target
-    thread = exe_ctx.thread
+    _ = exe_ctx.target
+    _ = exe_ctx.thread
 
 
     if options.patchInstrument:
@@ -408,6 +410,8 @@ def patch_code(debugger, addr, ins, count):
     return hexIntInStr(retStr)
 
 def is_raw_data(data):
+
+    # pylint: disable=anomalous-backslash-in-string
     pattern = "\{\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*,\s*0x[0-9a-fA-F]{2}\s*\}"
     ret = re.match(pattern, data)
 
@@ -423,7 +427,7 @@ def patcher(debugger, ins, addr, size):
         return "[x] power by xia0@2019"
 
     supportInsList = {'nop':'0x1f, 0x20, 0x03, 0xd5 ', 'ret':'0xc0, 0x03, 0x5f, 0xd6', 'mov0':'0x00, 0x00, 0x80, 0xd2', 'mov1':'0x20, 0x00, 0x80, 0xd2'}
-    if not supportInsList.has_key(ins):
+    if ins not in supportInsList.keys():
         print("[-] patcher not support this ins type:{}".format(ins))
         return "[x] power by xia0@2019"
 
@@ -455,6 +459,7 @@ def hexIntInStr(needHexStr):
         r = hex(int(intvalueStr))
         return r
 
+    # pylint: disable=anomalous-backslash-in-string
     pattern = '(?<=\s)[0-9]{1,}(?=\s)'
 
     return re.sub(pattern, handler, needHexStr, flags = 0)

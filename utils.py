@@ -1,6 +1,9 @@
+#! /usr/bin/env python3
+
 import re
 import lldb
 import os
+import choose
 
 
 def ILOG(log):
@@ -26,8 +29,11 @@ def exe_cmd(debugger, command):
 
 def get_app_path(debugger):
     ret = exe_cmd(debugger, "target list")
+
+    # pylint: disable=anomalous-backslash-in-string
     pattern = '/.*\('
     match = re.search(pattern, ret)
+    
     if match:
         found = match.group(0)
         found = found.split("(")[0]
@@ -60,5 +66,5 @@ def getAllImageOfApp(debugger, appDir):
     }
     retStr
     '''
-    ret = exeScript(debugger, command_script)
+    ret = choose.exeScript(debugger, command_script)
     return ret
