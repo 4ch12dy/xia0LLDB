@@ -1,6 +1,19 @@
 ## xia0LLDB
 
-[中文版README](./resource/README-zh.md) : it is deprecated
+```
+
+           https://github.com/4ch12dy/xia0LLDB
+          Welcome to xia0LLDB - Python3 Edition
+          ,--.          ,--.  ,--.   ,--.   ,------.  ,-----.   
+,--.  ,--.`--' ,--,--. /    \ |  |   |  |   |  .-.  \ |  |) /_  
+ \  `'  / ,--.' ,-.  ||  ()  ||  |   |  |   |  |  \  :|  .-.  \ 
+ /  /.  \ |  |\ '-'  | \    / |  '--.|  '--.|  '--'  /|  '--' /  
+'--'  '--'`--' `--`--'  `--'  `-----'`-----'`-------' `------'   
+
+[xia0LLDB] * Version: v2.0 
+[xia0LLDB] + Loading all scripts from /Users/zhangshun/xia0/iOSRE/LLDB/xia0LLDB
+[xia0LLDB] * Finished
+```
 
 ### Notice(^_<)
 
