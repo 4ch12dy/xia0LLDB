@@ -127,16 +127,37 @@ def get_address_info_by_address(debugger, address):
     uintptr_t symbol_addr = (uintptr_t)dl_info.dli_saddr;
 
 
-    [retStr appendString:@"Module Path: "];
+    [retStr appendString:@"Module  path: "];
     [retStr appendString:@(module_path)];
-    [retStr appendString:@"\nModule base: "];
+    [retStr appendString:@"\nModule  base: "];
     [retStr appendString:(id)[@(module_base) stringValue]];
-    [retStr appendString:@"\nSymbol name: "];
+
+    long slide = 0;
+    NSString* targetModulePath = @(module_path);
+    uint32_t count = (uint32_t)_dyld_image_count();
+    for(uint32_t i = 0; i < count; i++){
+        char* curModuleName_cstr = (char*)_dyld_get_image_name(i);
+        slide = (long)_dyld_get_image_vmaddr_slide(i);
+        uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
+        NSString* curModuleName = @(curModuleName_cstr);
+        if([curModuleName isEqualToString:targetModulePath]) {
+            [retStr appendString:@"\nModule slide: "];
+            [retStr appendString:(id)[@(slide) stringValue]];
+            break;
+        }
+    }
+    [retStr appendString:@"\ntarget  addr: "];
+    [retStr appendString:(id)[@((uintptr_t)targetAddr) stringValue]];
+
+    uintptr_t target_file_addr = (uintptr_t)((uint64_t)targetAddr - slide);
+    [retStr appendString:@"\nFile    addr: "];
+    [retStr appendString:(id)[@(target_file_addr) stringValue]];
+
+    [retStr appendString:@"\nSymbol  name: "];
     [retStr appendString:@(symbol_name)];
-    [retStr appendString:@"\nSymbol addr: "];
+    [retStr appendString:@"\nSymbol  addr: "];
     [retStr appendString:(id)[@(symbol_addr) stringValue]];
-
-
+    
     retStr
     '''
     retStr = utils.exe_script(debugger, command_script)
