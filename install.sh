@@ -9,11 +9,11 @@ sed -i "" '/.*xlldb\.py/d' $lldbinit 2>/dev/null
 echo "[*] delete origin xia0LLDB in $lldbinit"
 
 if [[ -f $lldbinit ]]; then
-    echo "[*] lldbinit file exist, add xlldb.py to $lldbinit"
+    echo "[*] lldbinit file exist, add $xlldb_file_path to $lldbinit"
     echo -e "\ncommand script import $xlldb_file_path" >> $lldbinit
     echo -e "\ncommand alias freshxlldb command script import $xlldb_file_path" >> $lldbinit
 else
-    echo "[+] lldbinit file not exist, add xlldb.py to $lldbinit"
+    echo "[+] lldbinit file not exist, add $xlldb_file_path to $lldbinit"
     echo -e "\ncommand script import $xlldb_file_path" > $lldbinit
     echo -e "\ncommand alias freshxlldb command script import $xlldb_file_path" >> $lldbinit
 fi
