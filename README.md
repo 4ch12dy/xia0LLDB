@@ -1,4 +1,4 @@
-## xia0LLDB
+# xia0LLDB
 
 ```
 
@@ -15,7 +15,7 @@
 [xia0LLDB] * Finished
 ```
 
-### Notice(^_<)
+## Notice(^_<)
 
 ~~There is a problem that lldb import xia0LLDB  in last macOS Catalina, because the last macOS's lldb default use python3. Here is a way to change it to python2~~
 
@@ -25,7 +25,7 @@
 
 **Thanks [@Lakr](https://twitter.com/Lakr233) so much for porting it to Python3 !**
 
-### Install 
+## Install 
 
 `git clone xia0LLDB_git_project `
 
@@ -33,9 +33,9 @@ just run `install.sh`
 
 Happy debugging~~
 
-### Commands
+## Commands
 
-#### alias
+### alias
 
  Below is cmds just use alias in cmd.txt
 
@@ -87,7 +87,7 @@ Happy debugging~~
 
 go to the env that can run oc script. This cmd is always used when backboard debug luanch app, debuger just attch on.
 
-#### ivars
+### ivars
 
 print all ivars of OC object (iOS Only)
 
@@ -107,7 +107,7 @@ in CContactMgr:
 ...
 ```
 
-#### methods
+### methods
 
 print all methods of OC object (iOS Only)
 
@@ -128,11 +128,11 @@ in CContactMgr:
 ...
 ```
 
-#### freshxlldb
+### freshxlldb
 
 Re import xia0LLDB from lldbinit
 
-#### sbt [2018/08/04]
+### sbt [2018/08/04]
 
 the replacement of `bt` , it can restore frame OC symbol on stackframe. if you want to restore block symbol, you can use the ida python script provided to get block symbol json file. then input `sbt -f  block_json_file_path`  in lldb. Beside it can show more infomation: mem address, file address
 
@@ -159,7 +159,7 @@ the replacement of `bt` , it can restore frame OC symbol on stackframe. if you w
   frame #14: [file:0x1808ec020 mem:0x1cd37c020] libdyld.dylib`start + 4 
 ```
 
-#### choose [2019/07/21]
+### choose [2019/07/21]
 
 get instance object of given class name, a lldb version of cycript's choose command
 
@@ -172,7 +172,7 @@ V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V  V
 <CContactMgr: 0x2835c4d00>
 ```
 
-#### xbr [2019/08/11]
+### xbr [2019/08/11]
 
 xia0 super set breakpoint command:set breakpoint at OC class method although strip symbol and so on
 
@@ -218,7 +218,7 @@ Breakpoint 47: where = TestPaly`-[UPLivePlayerVC pause] at UPLivePlayerVC.m:132,
 Set 47 breakpoints of UPLivePlayerVC
 ```
 
-#### debugme [2019/08/13]
+### debugme [2019/08/13]
 
 bypass anti-debug: can hook ptrace and inlinehook svc to kill anti debug. it is so strong ever!!!
 
@@ -237,8 +237,7 @@ bypass anti-debug: can hook ptrace and inlinehook svc to kill anti debug. it is 
 [x] happy debugging~ kill antiDebug by xia0@2019
 ```
 
-
-#### info [2019/08/20]
+### info [2019/08/20]
 
 very useful command to get info of address/function/module and so on
 
@@ -268,8 +267,7 @@ Symbol name: __getpid
 Symbol addr: 0x1cd4ca3b8
 ```
 
-
-#### dumpdecrypted [2019/09/22]
+### dumpdecrypted [2019/09/22]
 
 dump macho image in lldb, default dump all macho image.
 
@@ -324,7 +322,7 @@ dump macho image in lldb, default dump all macho image.
 [*] Developed By xia0@2019
 ```
 
-#### patcher [2019/10/17] 
+### patcher [2019/10/17] 
 
 runtime patch instrument in lldb
 
@@ -372,7 +370,7 @@ runtime patch instrument in lldb
 
 
 
-### TODO
+## TODO
 
 - Anti-anti-debug：bypass anti debug in lldb （done at 2019/09/11）
 - OCHOOK：hook ObjectC function in lldb
@@ -382,7 +380,7 @@ runtime patch instrument in lldb
 - traceOC: trace ObjectC call by inlinehook msg_send stub code
 - ...
 
-### Update
+## Update
 
 - [2019/07/04] Update for **sbt -x / xutil**  :  xutil cmd and sbt -x to disable color output in Xcode
 
@@ -406,12 +404,12 @@ runtime patch instrument in lldb
 
   
 
-### Document
+## Document
 
 - [About_this_project](http://4ch12dy.site/2018/10/03/xia0LLDB/xia0LLDB/)
 - [sbt command for frida](http://4ch12dy.site/2019/07/02/xia0CallStackSymbols/xia0CallStackSymbols/)
 
-### Credits
+## Credits
 
 - [http://blog.imjun.net/posts/restore-symbol-of-iOS-app/](http://blog.imjun.net/posts/restore-symbol-of-iOS-app/) thanks to the ida_block_json.py script
 
