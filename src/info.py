@@ -91,7 +91,7 @@ def get_module_info_by_name(debugger, moduleName):
     if "error" in retStr:
         utils.ELOG("something error in OC script # " + retStr.strip())
         utils.ILOG("so use command to get info")
-        ret = exeCommand(debugger, "im li -o -f")
+        ret = utils.exe_cmd(debugger, "im li -o -f")
         pattern = ".*" + moduleName.replace("\"", "")
         match = re.search(pattern, ret) # TODO: more strict
         if match:

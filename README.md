@@ -35,9 +35,57 @@ Happy debugging~~
 
 ### Commands
 
-#### pcc
+#### alias
 
-it is just alias of  `process connect connect://127.0.0.1:1234`
+ Below is cmds just use alias in cmd.txt
+
+- mload [dylib_in_the_iphone_device_path]
+
+  Load a dylib into current process
+
+- rr
+
+  Fast show some important regiters 
+
+- pwindow
+
+  Print current key windown
+
+- xi [code_address]
+
+  just show address disassmble +/- 8
+
+- dfuc [addr_of_func]
+
+  show function all disassemble by given address
+
+- pclass [oc_object]
+
+  print oc object class name
+
+- pbcopy
+
+  get string from iOS device pasteboard
+
+- pbpaste [string]
+
+  paste string to iOS device pasteboard
+
+- data [object_of_NSData]
+
+  print NSData object
+
+- pcc
+
+  It is just alias of  `process connect connect://127.0.0.1:1234`
+
+- wpc
+
+  write pc register to control exe process
+
+### croc
+
+go to the env that can run oc script. This cmd is always used when backboard debug luanch app, debuger just attch on.
 
 #### ivars
 
