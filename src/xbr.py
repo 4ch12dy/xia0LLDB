@@ -520,7 +520,7 @@ def xbr(debugger, command, result, dict):
             else:               
                 mainImagePath = get_main_image_path(debugger)
                 if "no value available" in  mainImagePath or "error" in mainImagePath:
-                    ret = utils.exe_command(debugger, "target list")
+                    ret = utils.exe_cmd(debugger, "target list")
                     # pylint: disable=anomalous-backslash-in-string
                     pattern = '/.*\('
                     match = re.search(pattern, ret) # TODO: more strict
@@ -539,7 +539,7 @@ def xbr(debugger, command, result, dict):
 
                 targetImagePath = mainImagePath
 
-            ret = utils.exe_command(debugger, "im li -o -f")
+            ret = utils.exe_cmd(debugger, "im li -o -f")
             pattern = '0x.*?' + targetImagePath.replace("\"", "")
             match = re.search(pattern, ret) # TODO: more strict
             if match:
