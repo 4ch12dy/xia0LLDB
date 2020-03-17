@@ -32,4 +32,6 @@ command alias dfuc disassemble -a %1
 
 command alias wpc register write $pc %1
 
+command alias waddr watchpoint set expression -w read_write -s 1 -- %1
+
 pcc
