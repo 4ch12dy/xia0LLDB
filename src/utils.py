@@ -89,5 +89,5 @@ def get_all_image_of_app(debugger, appDir):
     }
     retStr
     '''
-    ret = choose.exeScript(debugger, command_script)
+    ret = exe_script(debugger, command_script)
     return ret
