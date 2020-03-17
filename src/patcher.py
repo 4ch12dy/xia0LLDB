@@ -45,7 +45,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
         if options.patchAddress:
             patch_addr = int(options.patchAddress, 16)
         else:
-            ret = utils.exe_command(debugger, "p/x $pc")
+            ret = utils.exe_cmd(debugger, "p/x $pc")
             ret = ret.strip()
             pattern = '0x[0-9a-f]+'
             match = re.search(pattern, ret)
