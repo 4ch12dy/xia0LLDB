@@ -43,10 +43,10 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     if options.superX:
         utils.ILOG("set breakpoint at CFBundleGetMainBundle")
         utils.exe_cmd(debugger, "b CFBundleGetMainBundle")
-        time.sleep(3)
+        time.sleep(1)
         utils.ILOG("will continue process and dump")
         utils.exe_cmd(debugger, "c")
-        time.sleep(2)
+        time.sleep(1)
         utils.ILOG("start execute dumpdecrypted")
         ret = dumpdecrypted(debugger)
     else:
@@ -61,17 +61,6 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     result.AppendMessage(str(ret))
             
     return 
-
-def get_main_image_path(debugger):
-    
-    command_script = r''' 
-    const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
-    path
-    '''
-    # is in executable path?
-    ret = utils.exe_script(debugger, command_script)
-    ret = ret.strip()
-    return ret[1:-1]
 
 def get_main_image_macho_header(debugger):
     command_script = r''' 
@@ -99,29 +88,6 @@ def get_main_image_macho_header(debugger):
     # is in executable path?
     ret = utils.exe_script(debugger, command_script)
     return hex(int(ret, 10))
-
-def get_all_image_of_app(debugger, appDir):
-    command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";' 
-    command_script += r'''
-    NSMutableString* retStr = [NSMutableString string];
-    
-    uint32_t count = (uint32_t)_dyld_image_count();
-    for(uint32_t i = 0; i < count; i++){
-        char* curModuleName_cstr = (char*)_dyld_get_image_name(i);
-        long slide = (long)_dyld_get_image_vmaddr_slide(i);
-        uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
-        NSString* curModuleName = @(curModuleName_cstr);
-        if([curModuleName containsString:appDir]) {
-            [retStr appendString:(id)[@(i) stringValue]];
-            [retStr appendString:@","];
-            [retStr appendString:@(curModuleName_cstr)];
-            [retStr appendString:@"#"];
-        }
-    }
-    retStr
-    '''
-    ret = utils.exe_script(debugger, command_script)
-    return ret
 
 def get_macho_entry_offset(debugger):
     command_script = '@import Foundation;' 
@@ -575,36 +541,21 @@ def dumpdecrypted(debugger,modulePath=None, moduleIdx=None):
     # must delete all breakpoints.
     utils.ILOG("delete all breakpoints")
     utils.exe_cmd(debugger, "br de -f")
-    #dump_macho_to_file(debugger,)
+    main_image = utils.get_app_exe_path()
+    images = utils.get_all_image_of_app()
+    utils.ILOG("start to dump...\n")
     if modulePath and moduleIdx:
         print(dump_macho_to_file(debugger, moduleIdx, modulePath))
     else:
-        mainImagePath = get_main_image_path(debugger)
-        appDir = os.path.dirname(mainImagePath)
-        
-        appImagesStr = get_all_image_of_app(debugger, appDir)
-        
-        appImagesArr = appImagesStr.split("#")
-        for imageInfo in appImagesArr:
-            if not imageInfo or not "," in imageInfo:
-                utils.ELOG("image info is null, skip image # " + imageInfo)
+        for image in images:
+            if main_image == image["name"]:
+                entryAddrStr = get_macho_entry_offset(debugger)
+                entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
+                utils.SLOG("fix main addr:" + hex(entryAddr_int))
+                print(dump_macho_to_file(debugger, image["idx"], image["name"], entryAddr_int))
                 continue
-
-            utils.ILOG("now is image: " + imageInfo)
-            info = imageInfo.split(",")
-
-            if len(info) == 2:
-                utils.ILOG("start dump ["+ info[0] +"] image:" + info[1])
-                # print "idx:" + info[0]
-                # print "path:" + info[1]
-                if info[1] == mainImagePath:
-                    entryAddrStr = get_macho_entry_offset(debugger)
-                    entryAddr_int = int(entryAddrStr.strip()[1:-1], 16)
-                    utils.SLOG("fix main addr:" + hex(entryAddr_int))
-                    print(dump_macho_to_file(debugger, info[0], info[1], entryAddr_int))
-                    continue
-                print(dump_macho_to_file(debugger, info[0], info[1]))
-    return '\n\n[*] Developed By xia0@2019'
+            print(dump_macho_to_file(debugger, image["idx"], image["name"]))
+    return '[*] Developed By xia0@2019'
 
 def generate_option_parser():
     usage = "usage: dumpdecrypted [options] args"

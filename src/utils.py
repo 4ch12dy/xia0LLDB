@@ -14,13 +14,13 @@ def SLOG(log):
     print("[+] " + log)
 
 def hex_int_in_str(needHexStr):
-    
+
     def handler(reobj):
         intvalueStr = reobj.group(0)
-        
+
         r = hex(int(intvalueStr))
         return r
-    
+
     # pylint: disable=anomalous-backslash-in-string
     pattern = '(?<=\s)[0-9]{1,}(?=\s)'
 
@@ -34,9 +34,10 @@ def exe_script(debugger,command_script):
     if not res.HasResult():
         # something error
         return res.GetError()
-            
+
     response = res.GetOutput()
     return response
+
 
 def exe_cmd(debugger, command):
     res = lldb.SBCommandReturnObject()
@@ -46,17 +47,17 @@ def exe_cmd(debugger, command):
     if not res.HasResult():
         # something error
         return res.GetError()
-            
+
     response = res.GetOutput()
     return response
 
-def get_app_path(debugger):
+def get_app_exe_path(debugger=lldb.debugger):
     ret = exe_cmd(debugger, "target list")
 
     # pylint: disable=anomalous-backslash-in-string
     pattern = '/.*\('
     match = re.search(pattern, ret)
-    
+
     if match:
         found = match.group(0)
         found = found.split("(")[0]
@@ -69,8 +70,11 @@ def get_app_path(debugger):
     SLOG("use \"target list\" to get main module:" + mainImagePath)
     return mainImagePath
 
-def get_all_image_of_app(debugger, appDir):
-    command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";' 
+def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
+    if not appDir:
+        appDir = os.path.dirname(get_app_exe_path())
+    ILOG("app dir:{}".format(appDir))
+    command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";'
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
     
@@ -90,4 +94,24 @@ def get_all_image_of_app(debugger, appDir):
     retStr
     '''
     ret = exe_script(debugger, command_script)
-    return ret
+    images = []
+    image_arr = ret.strip().split("#")
+    for image_str in image_arr:
+        if image_str and image_str != "":
+            image_idx = image_str.split(",")[0]
+            image_name = image_str.split(",")[1]
+            image_info = {}
+            image_info["idx"] = image_idx
+            image_info["name"] = image_name
+            images.append(image_info)
+
+    return images
+
+def is_process_running():
+    status = exe_cmd(lldb.debugger, "process status")
+    if "running" in status:
+        return True
+    if "stopped" in status:
+        return False
+
+    return False
