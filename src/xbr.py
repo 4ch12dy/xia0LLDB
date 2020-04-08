@@ -454,6 +454,36 @@ def get_process_module_slide(debugger, modulePath):
     slide = utils.exe_script(debugger, command_script)
     return slide
 
+def get_all_class_plus_load_methods(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+    NSMutableString* retStr = [NSMutableString string];
+
+    unsigned int c_size = 0;
+    const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
+    const char **allClasses = (const char **)objc_copyClassNamesForImage(path, &c_size);
+
+    for (int i = 0; i < c_size; i++) {
+        Class cls = objc_getClass(allClasses[i]);
+        unsigned int cm_size = 0;
+        struct objc_method **classMethods = (struct objc_method **)class_copyMethodList((Class)objc_getMetaClass((const char *)class_getName(cls)), &cm_size);
+
+        for (int k = 0; k < cm_size; k++) {
+            struct objc_method * meth = classMethods[k];
+            id implementation = (id)method_getImplementation(meth);
+            NSString* cm_name = NSStringFromSelector((SEL)method_getName(meth));
+            if([cm_name isEqualToString:@"load"]){
+                [retStr appendString:(id)[@((uintptr_t)implementation) stringValue]];
+                [retStr appendString:@","];
+            }
+        }
+        free(classMethods);
+    }
+    free(allClasses);
+    retStr
+    '''
+    return utils.exe_script(debugger, command_script)
+
 def xbr(debugger, command, result, dict):
     raw_args = create_command_arguments(command)
 
@@ -489,8 +519,21 @@ def xbr(debugger, command, result, dict):
             initFunAddr_int = int(initFunAddrStr.strip()[1:-1], 16)
             utils.ILOG("breakpoint at mod int first function:{}".format(hex(initFunAddr_int)))
             lldb.debugger.HandleCommand ('breakpoint set --address %d' % initFunAddr_int)
+        elif options.entryAddress == "load":
+            
+            ret = get_all_class_plus_load_methods(debugger)
+            all_load_addrs_str_arr = ret.strip().split(",")
+            all_load_addrs = []
+            for addr in all_load_addrs_str_arr:
+                if addr != "":
+                    all_load_addrs.append(int(addr, 10))
+            utils.ILOG("will set breakpoint at all +[* load] methold, count:{}".format(len(all_load_addrs)))
+            for addr in all_load_addrs:
+                lldb.debugger.HandleCommand ('breakpoint set --address %d' % addr)
+                utils.SLOG("set br at:{}".format(hex(addr)))
+            # utils.ILOG("load:\n{}\n".format([hex(addr) for addr in all_load_addrs]))
         else:
-            print(utils.ELOG("you should specail the -E options:[main/init]"))
+            utils.ELOG("you should specail the -E options:[main/init/load]")
 
         return
         
@@ -620,6 +663,6 @@ def generate_option_parser():
             action="store",
             default=None,
             dest="entryAddress",
-            help="set a breakpoint at entry address/main")
+            help="set a breakpoint at entry address/main/load")
 
     return parser
