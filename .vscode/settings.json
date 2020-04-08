@@ -1,0 +1,7 @@
+{
+    "workbench.sideBar.location": "right",
+    "python.autoComplete.extraPaths": [
+        "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
+    ],
+    "editor.tabSize": 4
+}
