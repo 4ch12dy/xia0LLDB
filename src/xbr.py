@@ -522,6 +522,9 @@ def xbr(debugger, command, result, dict):
         elif options.entryAddress == "load":
             
             ret = get_all_class_plus_load_methods(debugger)
+            if "<object returned empty description>" in ret:
+                utils.ILOG("not found +[* load] method")
+                return
             all_load_addrs_str_arr = ret.strip().split(",")
             all_load_addrs = []
             for addr in all_load_addrs_str_arr:
