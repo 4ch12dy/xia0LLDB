@@ -10,7 +10,7 @@
  /  /.  \ |  |\ '-'  | \    / |  '--.|  '--.|  '--'  /|  '--' /  
 '--'  '--'`--' `--`--'  `--'  `-----'`-----'`-------' `------'   
 
-[xia0LLDB] * Version: v2.2
+[xia0LLDB] * Version: v2.3
 [xia0LLDB] + Loading all scripts from ~/xia0/iOSRE/LLDB/xia0LLDB
 [xia0LLDB] * Finished
 ```
@@ -85,7 +85,7 @@ Happy debugging~~
 
 ### croc
 
-go to the env that can run oc script. This cmd is always used when backboard debug luanch app, debuger just attch on.
+👉👉👉 go to the env that can run oc script. This cmd is always used when backboard debug luanch app, debuger just attch on.The point  is between  app code not execute  and can run lldb commands.So try use it  when backboard debug luanch app.
 
 ### ivars
 
@@ -216,6 +216,14 @@ Breakpoint 45: where = TestPaly`-[UPLivePlayerVC setUrl:] at UPLivePlayerVC.h:13
 Breakpoint 46: where = TestPaly`-[UPLivePlayerVC play] at UPLivePlayerVC.m:124, address = 0x0000000102dbfd84
 Breakpoint 47: where = TestPaly`-[UPLivePlayerVC pause] at UPLivePlayerVC.m:132, address = 0x0000000102dbfe1c
 Set 47 breakpoints of UPLivePlayerVC
+
+// set breakpoint at all +[* load] methods
+(lldb) xbr -E load
+[*] will set breakpoint at all +[* load] methold, count:2
+Breakpoint 2: where = TestAPP`+[OCTest load] at OCTest.m:19, address = 0x00000001042df674
+[+] set br at:0x1042df674
+Breakpoint 3: where = TestAPP`+[OCClassDemo load] at OCClassDemo.m:19, address = 0x000000010430272c
+[+] set br at:0x10430272c
 ```
 
 ### debugme [2019/08/13]
