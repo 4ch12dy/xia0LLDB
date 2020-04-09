@@ -255,9 +255,9 @@ def patch_ptrace(debugger):
     retStr = exeScript(debugger, command_script)
     return utils.hex_int_in_str(retStr)
 
-def get_text_segment(debugger):
-    command_script = '@import Foundation;' 
-    command_script += r'''
+def get_text_segment(debugger, macho_idx):
+    command_script_header = '@import Foundation;' 
+    command_script_header += r'''
     //NSMutableString* retStr = [NSMutableString string];
 
     #define MH_MAGIC_64 0xfeedfacf 
@@ -314,8 +314,11 @@ def get_text_segment(debugger):
     };
 
     int x_offset = 0;
-    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
-
+    '''
+    command_script_init = "int image_index = {};".format(macho_idx)
+    command_script_init += 'struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(image_index);'
+    command_script = command_script_header + command_script_init
+    command_script += '''
     if(header->magic != MH_MAGIC_64) {
         return ;
     }
@@ -338,7 +341,7 @@ def get_text_segment(debugger):
             if(!strcmp(curSection->segname, "__TEXT") && !strcmp(curSection->sectname, "__text")){
                 uint64_t memAddr = curSection->addr;
                
-                textStart = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
+                textStart = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(image_index);
                 textEnd = textStart + curSection->size;
                 /*
                 [retStr appendString:@" "];
@@ -707,55 +710,38 @@ def xia0Hook(debugger, svcAddr):
     return utils.hex_int_in_str(retStr)
 
 def debugme(debugger):
-    utils.ILOG("start patch ptrace funtion to bypass antiDebug")
+    utils.ILOG("start patch ptrace funtion to bypass anti debug")
     patch_ptrace(debugger)
-    utils.SLOG("success ptrace funtion to bypass antiDebug")
+    utils.SLOG("ptrace funtion patach done")
 
-    utils.ILOG("start patch svc ins to bypass antiDebug")
-    # get text segment start/end address 
-    
-    ret = get_text_segment(debugger)
-    # remove " \n"
-    ret = ret.strip()
-    ret = ret[1:-1]
+    utils.ILOG("start patch svc ins to bypass anti debug")
+    images = utils.get_all_image_of_app()
+    for image in images:
+        utils.ILOG("search svc from:{}".format(image["name"]))
+        text_addr_arr_str = get_text_segment(debugger, image["idx"])
+        text_addr_arr = text_addr_arr_str.strip()[1:-1].split(",")
+        if len(text_addr_arr) < 2:
+            utils.ELOG("failed to get text segment of image:{}" + image["name"])
+            continue
+        text_start = text_addr_arr[0]
+        text_end = text_addr_arr[1]
+        utils.ILOG("text start:{} end:{}".format(text_start, text_end))
+        svc_arr_str = lookup_svc_insn(debugger, text_start, text_end)
+        if "<object returned empty description>" in svc_arr_str:
+            utils.ILOG("not found svc ins, so don't need patch")
+            continue
+        
+        svc_arr = svc_arr_str.strip()
+        svc_arr = svc_arr.split()
 
-    textAddrs = ret.split(',')
-
-    if len(textAddrs) < 2:
-        utils.ELOG("failed to get text segment:" + str(textAddrs))
-        return
-
-    textStart = ret.split(',')[0]
-    textEnd = ret.split(',')[1]
-    textStart = textStart.strip()
-    textEnd = textEnd.strip()
-
-    utils.SLOG("get text segment start address:{} and end address:{}".format(textStart, textEnd))
-    
-    # lookup svc ins go through all text code
-    ret = lookup_svc_insn(debugger, textStart, textEnd)
-
-    if "<object returned empty description>" in ret:
-        utils.ILOG("not found svc ins, so don't need patch")
-        return
-    
-    svcAddrs = ret.strip()
-    svcAddrs = svcAddrs.split()
-
-    if len(svcAddrs) < 1:
-        utils.ELOG("not found svc ins, so don't need patch")
-        return
-
-    for svcAddr in svcAddrs:
-        utils.SLOG("found svc address:{}".format(svcAddr))
-        utils.ILOG("start hook svc at address:{}".format(svcAddr))
-        ret = xia0Hook(debugger, svcAddr)
-        if ret:
-            utils.SLOG("success hook svc at address:{}".format(svcAddr))
-
-
-    utils.ILOG("all patch done")
-
+        if len(svc_arr) < 1:
+            utils.ELOG("not found svc ins, so don't need patch")
+            continue
+        for svc_addr in svc_arr:
+            utils.ILOG("start hook svc at address:{}".format(svc_addr))
+            ret = xia0Hook(debugger, svc_addr)
+            if ret:
+                utils.SLOG("hook svc at address:{} done".format(svc_addr))
     return
 
 def exeScript(debugger,command_script):
