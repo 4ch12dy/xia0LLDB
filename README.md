@@ -335,7 +335,7 @@ dump macho image in lldb, default dump all macho image.
 runtime patch instrument in lldb
 
 ```
-// -a patch_address -i patch_instrument -s instrument_count
+// -a patch_address -i patch_instrument{nop/ret/mov0/mov1} -s instrument_count
 (lldb) patcher -a 0x0000000100233a18 -i nop -s 8
 [*] start patch text at address:0x100233a18 size:8 to ins:"nop" and data:0x1f, 0x20, 0x03, 0xd5 
 [*] make ins data:
