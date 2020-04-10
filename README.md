@@ -27,15 +27,13 @@
 
 ## Install 
 
-`git clone xia0LLDB_git_project `
+Just open Terminal and run below command
 
-just run `install.sh` 
+`git clone https://github.com/4ch12dy/xia0LLDB.git && cd xia0LLDB && ./install.sh` 
 
-Happy debugging~~
+**It highly recommend you to install [issh](https://github.com/4ch12dy/issh)/[Tap2debug](https://github.com/4ch12dy/Tap2Debug) **
 
-#### It highly recommend you to install [issh](https://github.com/4ch12dy/issh)/[Tap2debug](https://github.com/4ch12dy/Tap2Debug) 
-
-
+**Happy debugging~~**
 
 ## Commands
 
