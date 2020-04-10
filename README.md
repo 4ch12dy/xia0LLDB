@@ -33,6 +33,10 @@ just run `install.sh`
 
 Happy debugging~~
 
+#### It highly recommend you to install [issh](https://github.com/4ch12dy/issh)/[Tap2debug](https://github.com/4ch12dy/Tap2Debug) 
+
+
+
 ## Commands
 
 ### alias
