@@ -31,9 +31,9 @@ Just open Terminal and run below command
 
 `git clone https://github.com/4ch12dy/xia0LLDB.git && cd xia0LLDB && ./install.sh` 
 
-**It highly recommend you to install [issh](https://github.com/4ch12dy/issh)/[Tap2debug](https://github.com/4ch12dy/Tap2Debug) **
+#### It highly recommend you to install [issh](https://github.com/4ch12dy/issh)/[Tap2debug](https://github.com/4ch12dy/Tap2Debug) 
 
-**Happy debugging~~**
+#### Happy debugging ✔️
 
 ## Commands
 
