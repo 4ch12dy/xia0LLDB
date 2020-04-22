@@ -10,7 +10,7 @@
  /  /.  \ |  |\ '-'  | \    / |  '--.|  '--.|  '--'  /|  '--' /  
 '--'  '--'`--' `--`--'  `--'  `-----'`-----'`-------' `------'   
 
-[xia0LLDB] * Version: v2.5
+[xia0LLDB] * Version: v2.6
 [xia0LLDB] + Loading all scripts from ~/xia0/iOSRE/LLDB/xia0LLDB
 [xia0LLDB] * Finished
 ```

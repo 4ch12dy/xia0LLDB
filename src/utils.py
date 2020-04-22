@@ -70,9 +70,24 @@ def get_app_exe_path(debugger=lldb.debugger):
     SLOG("use \"target list\" to get main module:" + mainImagePath)
     return mainImagePath
 
+def get_main_image_path(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+
+    // const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
+    id bundle = objc_msgSend((Class)objc_getClass("NSBundle"), @selector(mainBundle));
+    id exePath = objc_msgSend((id)bundle, @selector(executablePath));
+    const char *path  = (char *)objc_msgSend((id)exePath, @selector(UTF8String));
+    
+    path
+    '''
+    retStr = exe_script(debugger, command_script)
+    
+    return retStr.strip()[1:-1]
+
 def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
     if not appDir:
-        appDir = os.path.dirname(get_app_exe_path())
+        appDir = os.path.dirname(get_main_image_path(debugger))
     ILOG("app dir:{}".format(appDir))
     command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";'
     command_script += r'''
