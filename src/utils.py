@@ -95,16 +95,19 @@ def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
     '''
     ret = exe_script(debugger, command_script)
     images = []
-    image_arr = ret.strip().split("#")
-    for image_str in image_arr:
-        if image_str and image_str != "":
-            image_idx = image_str.split(",")[0]
-            image_name = image_str.split(",")[1]
-            image_info = {}
-            image_info["idx"] = image_idx
-            image_info["name"] = image_name
-            images.append(image_info)
-
+    try:
+        raise Exception('spam', 'eggs')
+        image_arr = ret.strip().split("#")
+        for image_str in image_arr:
+            if image_str and image_str != "":
+                image_idx = image_str.split(",")[0]
+                image_name = image_str.split(",")[1]
+                image_info = {}
+                image_info["idx"] = image_idx
+                image_info["name"] = image_name
+                images.append(image_info)
+    except Exception as e:
+        ELOG("failed to get app images from:{}".format(ret))
     return images
 
 def is_process_running():
