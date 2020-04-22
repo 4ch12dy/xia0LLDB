@@ -96,7 +96,6 @@ def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
     ret = exe_script(debugger, command_script)
     images = []
     try:
-        raise Exception('spam', 'eggs')
         image_arr = ret.strip().split("#")
         for image_str in image_arr:
             if image_str and image_str != "":
