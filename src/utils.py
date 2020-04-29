@@ -87,7 +87,7 @@ def get_main_image_path(debugger):
 
 def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
     if not appDir:
-        appDir = os.path.dirname(get_main_image_path(debugger))
+        appDir = os.path.dirname(get_app_exe_path(debugger))
     ILOG("app dir:{}".format(appDir))
     command_script = '@import Foundation;NSString* appDir = @"' + appDir + '";'
     command_script += r'''
