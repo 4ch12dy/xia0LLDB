@@ -35,3 +35,7 @@ command alias wpc register write $pc %1
 command alias waddr watchpoint set expression -w read_write -s 1 -- %1
 
 pcc
+croc
+
+breakpoint set -E c++
+breakpoint set -E objc
