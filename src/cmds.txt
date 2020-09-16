@@ -2,10 +2,6 @@ command alias pcc process connect connect://127.0.0.1:1234
 
 command regex mload 's/(.+)/expression -lobjc -O -- void *handle = (void *)dlopen("%1", 2); id retVal = handle ? @"Success" : (NSString *)[[NSString alloc] initWithUTF8String:(char *)dlerror()]; retVal/'
 
-command regex ivars -h "Dumps all ivars for an instance of a particular class which inherits from NSObject (iOS, NSObject subclass only)" -s "ivars [UIView new]" -- 's/(.+)/expression -lobjc -O -- [%1 _ivarDescription]/'
-
-command regex methods -h "Dumps all methods implemented by the NSObject subclass (iOS, NSObject subclass only)" -s "methods UIView" -- 's/(.+)/expression -lobjc -O -- [%1 _shortMethodDescription]/'
-
 command alias rr register read $x0 $x1 $x2 $x3 $x4 $x5 $x6 $x7 $x8 $x9 $x16 $pc $lr $sp
 
 command regex pclass 's/(([0-9]|\$|\@|\[).*)/po [%1 class]/'
@@ -34,8 +30,8 @@ command alias wpc register write $pc %1
 
 command alias waddr watchpoint set expression -w read_write -s 1 -- %1
 
-pcc
-croc
+command alias scppexp breakpoint set -E c++
 
-breakpoint set -E c++
-breakpoint set -E objc
+command alias socexp breakpoint set -E objc
+
+pcc

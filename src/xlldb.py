@@ -16,6 +16,9 @@ import os
 import utils
 import colorme
 
+
+XLLDB_VERSION = "2.9"
+
 def banner():
     # pylint: disable
     xia0LLDB = r'''
@@ -31,7 +34,7 @@ def banner():
 
 def __lldb_init_module(debugger, internal_dict):
     print(banner())
-    print("[xia0LLDB] * Version: v2.8 ")
+    print("[xia0LLDB] * Version: {} ".format(XLLDB_VERSION))
     colorme.bootstrap_notice()
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)

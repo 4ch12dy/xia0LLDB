@@ -3,5 +3,6 @@
     "python.autoComplete.extraPaths": [
         "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
     ],
-    "editor.tabSize": 4
+    "editor.tabSize": 4,
+    "python.autoComplete.addBrackets": true
 }

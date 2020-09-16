@@ -64,6 +64,19 @@ def is_br_all_cmd(args):
         return False
     return True
 
+def is_br_all_cmd_x(args):
+    if len(args) == 0:
+        return False
+
+    arg = args[0]
+    if len(arg) == 0:
+        return False
+
+    if "$" in arg:
+        return True
+
+    return False
+
 def is_just_address_cmd(args):
     if len(args) == 0:
         return False
@@ -608,6 +621,25 @@ def xbr(debugger, command, result, dict):
         return
 
     # check is breakpoint at all methods address(IMP) for given classname
+    if is_br_all_cmd_x(args):
+        classname = args[0]
+        begin = classname.find('$')
+        end = classname.rfind('$')
+        classname = classname[begin+1 : end]
+        utils.ILOG("classname:{}".format(classname))
+
+        ret = get_all_method_address_of_class(debugger, classname)
+
+        addrArr = ret.split('-')[:-1]
+
+        for addr in addrArr:
+            address = int(addr)
+            if address:
+                lldb.debugger.HandleCommand ('breakpoint set --address %x' % address)
+        
+        result.AppendMessage("Set %ld breakpoints of %s" % (len(addrArr),classname))
+        return
+
     if is_br_all_cmd(args):
         classname = args[0]
         ret = get_all_method_address_of_class(debugger, classname)
