@@ -10,7 +10,7 @@
  /  /.  \ |  |\ '-'  | \    / |  '--.|  '--.|  '--'  /|  '--' /  
 '--'  '--'`--' `--`--'  `--'  `-----'`-----'`-------' `------'   
 
-[xia0LLDB] * Version: v2.8
+[xia0LLDB] * Version: v2.9
 [xia0LLDB] + Loading all scripts from ~/xia0/iOSRE/LLDB/xia0LLDB
 [xia0LLDB] * Finished
 ```
@@ -91,7 +91,7 @@ Just open Terminal and run below command
 
 ### ivars
 
-print all ivars of OC object (iOS Only)
+print all ivars of OC object (iOS Only) and **macOS version will come soon!**
 
 ```
 (lldb) ivars 0x2835c4d00
@@ -111,7 +111,9 @@ in CContactMgr:
 
 ### methods
 
-print all methods of OC object (iOS Only)
+print all methods of OC object (iOS Only)  and **macOS version will come soon!**
+
+**if the objc class name contains space like " m" or other odd characters. you can use "methods -n the_odd_class_name."**
 
 ```
 (lldb) methods CContactMgr
@@ -128,6 +130,24 @@ in CContactMgr:
 		- (void) OnGetNewXmlMsg:(id)arg1 Type:(id)arg2 MsgWrap:(id)arg3; (0x1001de380)
 		- (void) onServiceReloadData; (0x102d10934)
 ...
+
+(lldb) methods -n " m"
+[*] will get methods for class:" m"
+< m: 0x10d6f86f0>:
+in  m:
+	Properties:
+		@property (retain, nonatomic)  N*  kManager;  (@synthesize  kManager = _configManager;)
+		@property (retain, nonatomic)  h* payloadStore;  (@synthesize payloadStore = _payloadStore;)
+		@property (retain, nonatomic)  5* sensorAgent;  (@synthesize sensorAgent = _sensorAgent;)
+		@property (retain, nonatomic) NSObject<OS_dispatch_queue>* scriptMsgQueue;  (@synthesize scriptMsgQueue = _scriptMsgQueue;)
+  ...
+	Instance Methods:
+		- (void) setConfigManager:(id)arg1; (0x10d65b68c)
+		- (void) setSensorAgent:(id)arg1; (0x10d5c86d0)
+		- (void)  lb; (0x10d60aa04)
+		- (void) setKernelCode:(id)arg1; (0x10d6d9330)
+		- (void) setIsBaseKernel:(BOOL)arg1; (0x10d606168)
+  ...
 ```
 
 ### freshxlldb
