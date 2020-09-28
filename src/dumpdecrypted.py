@@ -391,7 +391,8 @@ def dump_macho_to_file(debugger, machoIdx, machoPath, fix_addr=0):
             // NSDocumentDirectory == 9 NSUserDomainMask == 1   
             NSString *docPath = ((NSArray*)NSSearchPathForDirectoriesInDomains((NSSearchPathDirectory)9, 1, YES))[0];
             
-            strlcpy(npath, (char*)[[docPath dataUsingEncoding:NSUTF8StringEncoding] bytes], sizeof(npath));
+            //strlcpy(npath, (char*)[[docPath dataUsingEncoding:NSUTF8StringEncoding] bytes], sizeof(npath));
+            strlcpy(npath, (char*)[docPath UTF8String], sizeof(npath));
             strlcat(npath, tmp, sizeof(npath));
             strlcat(npath, ".decrypted", sizeof(npath));
             strlcpy(x_buffer, npath, sizeof(x_buffer));
@@ -418,7 +419,7 @@ def dump_macho_to_file(debugger, machoIdx, machoPath, fix_addr=0):
                     outfd = (int)open(npath, O_RDWR|O_CREAT|O_TRUNC, 0644);
                 }
                 if (outfd == -1) {
-                    printf("[-] Failed opening\n");
+                    printf("[-] Failed opening:%s\n", strerror(errno));
                     break;
                 }
             }
