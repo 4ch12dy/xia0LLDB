@@ -598,7 +598,7 @@ def xbr(debugger, command, result, dict):
 
                 targetImagePath = mainImagePath
 
-            ret = utils.exe_cmd(debugger, "im li -o -f")
+            ret = utils.exe_cmd(debugger, "image list -o -f")
             pattern = '0x.*?' + targetImagePath.replace("\"", "")
             match = re.search(pattern, ret) # TODO: more strict
             if match:
@@ -607,7 +607,7 @@ def xbr(debugger, command, result, dict):
                 utils.ELOG("not found image:"+targetImagePath)
                 return
             moduleSlide = found.split()[0]
-            utils.ILOG("use \"im li -o -f\" cmd to get image slide:"+moduleSlide)
+            utils.ILOG("use \"image list -o -f\" cmd to get image slide:"+moduleSlide)
             moduleSlide = int(moduleSlide, 16)
 
         else:

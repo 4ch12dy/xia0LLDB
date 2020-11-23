@@ -17,7 +17,7 @@ import utils
 import colorme
 
 
-XLLDB_VERSION = "2.9"
+XLLDB_VERSION = "3.0"
 
 def banner():
     # pylint: disable

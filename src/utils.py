@@ -26,6 +26,17 @@ def hex_int_in_str(needHexStr):
 
     return re.sub(pattern, handler, needHexStr, flags = 0)
 
+def convertToInt(hex_num_or_num):
+    ret = None
+    if re.match('^0x[0-9a-fA-F]+$', hex_num_or_num):
+        ret = int(hex_num_or_num, 16)
+    elif re.match('^[0-9]+$', hex_num_or_num):
+        ret = int(hex_num_or_num, 10)
+    else:
+        ret = False
+
+    return ret
+
 def exe_script(debugger,command_script):
     res = lldb.SBCommandReturnObject()
     interpreter = debugger.GetCommandInterpreter()
@@ -84,6 +95,25 @@ def get_main_image_path(debugger):
     retStr = exe_script(debugger, command_script)
     
     return retStr.strip()[1:-1]
+
+# slide = (long)_dyld_get_image_vmaddr_slide(i);
+
+def get_image_slide(debugger, idx=0):
+    command_script = '@import Foundation;' 
+
+    command_script += "uint32_t i = {};".format(idx)
+    command_script += r'''
+    NSString* ret = @"wqkejkwqlej";
+    long slide = (long)_dyld_get_image_vmaddr_slide(i);
+    //ret = @(slide);
+    
+    slide
+    '''
+    retStr = exe_script(debugger, command_script)
+    retStr = retStr.strip()
+
+    return convertToInt(retStr)
+
 
 def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
     if not appDir:
