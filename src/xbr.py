@@ -13,7 +13,7 @@
 
 '''
 
-specail thanks to xia0z & Proteas
+special thanks to xia0z & Proteas
 
 '''
 
@@ -551,7 +551,7 @@ def xbr(debugger, command, result, dict):
                 utils.SLOG("set br at:{}".format(hex(addr)))
             # utils.ILOG("load:\n{}\n".format([hex(addr) for addr in all_load_addrs]))
         else:
-            utils.ELOG("you should specail the -E options:[main/init/load]")
+            utils.ELOG("you should special the -E options:[main/init/load]")
 
         return
         
@@ -561,9 +561,9 @@ def xbr(debugger, command, result, dict):
 
         if options.modulePath:
             modulePath = options.modulePath
-            utils.ILOG("you specail the module:" + modulePath)
+            utils.ILOG("you special the module:" + modulePath)
         else:
-            utils.ILOG("you not specail the module, default is main module")
+            utils.ILOG("you not special the module, default is main module")
             modulePath = None
 
         targetAddr = args[0]
