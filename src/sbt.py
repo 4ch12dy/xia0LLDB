@@ -230,7 +230,7 @@ def find_symbol_from_address_script(frame_addr, module_path):
     //const char *path = (char *)[[[NSBundle mainBundle] executablePath] UTF8String];
     const char **allClasses = (const char **)objc_copyClassNamesForImage(path, &c_size);
     
-    NSString *c_size_str = [@(c_size) stringValue];
+    // NSString *c_size_str = [@(c_size) stringValue];
 
     uintptr_t tmpDis = 0;
     uintptr_t theDistance = 0xffffffffffffffff;
@@ -301,7 +301,8 @@ def find_symbol_from_address_script(frame_addr, module_path):
     // [retStr appendString:@" -> "];
     // [retStr appendString:(id)[@((uintptr_t)theIMP) stringValue]];
     [retStr appendString:@" + "];
-    [retStr appendString:(id)[@((uintptr_t)theDistance) stringValue]];
+    NSNumber* theDistanceNum =  [NSNumber numberWithInt:theDistance];
+    [retStr appendString:(id)[theDistanceNum stringValue]];
 
     retStr
     '''

@@ -133,7 +133,8 @@ def get_all_image_of_app(debugger=lldb.debugger, appDir=None):
         uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
         NSString* curModuleName = @(curModuleName_cstr);
         if([curModuleName containsString:appDir]) {
-            [retStr appendString:(id)[@(i) stringValue]];
+            NSNumber* iNum =  [NSNumber numberWithInt:i];
+            [retStr appendString:(id)[iNum stringValue]];
             [retStr appendString:@","];
             [retStr appendString:@(curModuleName_cstr)];
             [retStr appendString:@"#"];

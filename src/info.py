@@ -106,7 +106,8 @@ def get_module_info_by_name(debugger, moduleName):
 
 #   get address info by address
 def get_address_info_by_address(debugger, address):
-    command_script = 'void * targetAddr = (void*)' + address + ';' 
+    command_script = "@import Foundation;"
+    command_script += 'void * targetAddr = (void*)' + address + ';' 
     command_script += r'''
     NSMutableString* retStr = [NSMutableString string];
 
@@ -124,13 +125,17 @@ def get_address_info_by_address(debugger, address):
     char* module_path = (char*)dl_info.dli_fname;
     uintptr_t module_base = (uintptr_t)dl_info.dli_fbase;
     char* symbol_name = (char*)dl_info.dli_sname;
+    if (!symbol_name) {
+        symbol_name = "";
+    }
     uintptr_t symbol_addr = (uintptr_t)dl_info.dli_saddr;
 
 
     [retStr appendString:@"Module  path: "];
     [retStr appendString:@(module_path)];
     [retStr appendString:@"\nModule  base: "];
-    [retStr appendString:(id)[@(module_base) stringValue]];
+    NSNumber* module_baseNum =  [NSNumber numberWithUnsignedLongLong:(unsigned long)module_base];
+    [retStr appendString:(id)[module_baseNum stringValue]];
 
     long slide = 0;
     NSString* targetModulePath = @(module_path);
@@ -140,24 +145,29 @@ def get_address_info_by_address(debugger, address):
         slide = (long)_dyld_get_image_vmaddr_slide(i);
         uintptr_t baseAddr = (uintptr_t)_dyld_get_image_header(i);
         NSString* curModuleName = @(curModuleName_cstr);
-        if([curModuleName isEqualToString:targetModulePath]) {
+        if((BOOL)[curModuleName isEqualToString:targetModulePath]) {
             [retStr appendString:@"\nModule slide: "];
-            [retStr appendString:(id)[@(slide) stringValue]];
+            NSNumber* slideNum =  [NSNumber numberWithInt:slide];
+            [retStr appendString:(id)[slideNum stringValue]];
             break;
         }
     }
+
     [retStr appendString:@"\ntarget  addr: "];
-    [retStr appendString:(id)[@((uintptr_t)targetAddr) stringValue]];
+    NSNumber* targetAddrNum =  [NSNumber numberWithUnsignedLongLong:(long)targetAddr];
+    [retStr appendString:(id)[targetAddrNum stringValue]];
 
     uintptr_t target_file_addr = (uintptr_t)((uint64_t)targetAddr - slide);
     [retStr appendString:@"\nFile    addr: "];
-    [retStr appendString:(id)[@(target_file_addr) stringValue]];
+    NSNumber* target_file_addrNum = [NSNumber numberWithUnsignedLongLong:target_file_addr];
+    [retStr appendString:(id)[target_file_addrNum stringValue]];
 
     [retStr appendString:@"\nSymbol  name: "];
     [retStr appendString:@(symbol_name)];
     [retStr appendString:@"\nSymbol  addr: "];
-    [retStr appendString:(id)[@(symbol_addr) stringValue]];
-    
+    NSNumber* symbol_addrNum =  [NSNumber numberWithUnsignedLongLong:symbol_addr];
+    [retStr appendString:(id)[symbol_addrNum stringValue]];
+
     retStr
     '''
     retStr = utils.exe_script(debugger, command_script)
