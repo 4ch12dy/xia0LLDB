@@ -39,10 +39,10 @@ def __lldb_init_module(debugger, internal_dict):
     file_path = os.path.realpath(__file__)
     dir_name = os.path.dirname(file_path)
     print("[xia0LLDB] + Loading all scripts from " + dir_name)
-    load_python_scripts_dir(dir_name)
+    load_python_scripts_dir(dir_name,debugger)
     print("[xia0LLDB] * Finished ")
 
-def load_python_scripts_dir(dir_name):
+def load_python_scripts_dir(dir_name, debugger):
     this_files_basename = os.path.basename(__file__)
     cmd = ''
     for file in os.listdir(dir_name):
@@ -55,4 +55,4 @@ def load_python_scripts_dir(dir_name):
 
         if file != this_files_basename:
             fullpath = dir_name + '/' + file
-            lldb.debugger.HandleCommand(cmd + fullpath)
+            utils.exe_cmd(debugger, cmd + fullpath)
