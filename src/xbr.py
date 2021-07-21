@@ -161,7 +161,7 @@ def get_instance_method_address(class_name, method_name):
 
 def get_all_method_address_of_class(debugger, classname):
 
-    command_script = 'const char* className = "' + classname + '";' 
+    command_script = '@import Foundation;const char* className = "' + classname + '";' 
 
     command_script += r'''
     //NSMutableArray *mAddrArr = [NSMutableArray array];
@@ -178,7 +178,8 @@ def get_all_method_address_of_class(debugger, classname):
         NSString* m_name = NSStringFromSelector((SEL)method_getName(meth));
         
         //[mAddrArr addObject:(id)[@((uintptr_t)implementation) stringValue]];
-        [retStr appendString:(id)[@((uintptr_t)implementation) stringValue]];
+        NSNumber* implementationNum =  [NSNumber numberWithUnsignedLongLong:(uintptr_t)implementation];
+        [retStr appendString:(id)[implementationNum stringValue]];
         [retStr appendString:@"-"];
     }
 
@@ -189,7 +190,8 @@ def get_all_method_address_of_class(debugger, classname):
         id implementation = (id)method_getImplementation(meth);
         NSString* cm_name = NSStringFromSelector((SEL)method_getName(meth));
         //[mAddrArr addObject:(id)[@((uintptr_t)implementation) stringValue]];
-        [retStr appendString:(id)[@((uintptr_t)implementation) stringValue]];
+        NSNumber* implementationNum =  [NSNumber numberWithUnsignedLongLong:(uintptr_t)implementation];
+        [retStr appendString:(id)[implementationNum stringValue]];
         [retStr appendString:@"-"];
     }
     retStr
