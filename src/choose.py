@@ -50,7 +50,7 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     return 
 
 def choose(debugger, classname):
-    command_script = 'NSString * className = @"' + classname + '";' 
+    command_script = '@import Foundation;NSString * className = @"' + classname + '";' 
     command_script += r'''
     
     // define
@@ -150,7 +150,7 @@ def choose(debugger, classname):
             
             uintptr_t * pointers = (uintptr_t *)(data);
     #ifdef __arm64__
-            struct objc_class * isa = (struct objc_class *)(pointers[0] & 0x1fffffff8);
+            void * isa = (void *)(pointers[0] & 0x1fffffff8);
     #else
             struct objc_class * isa = (struct objc_class *)(pointers[0]);
     #endif
@@ -159,7 +159,7 @@ def choose(debugger, classname):
 
             size_t needed;
             for(unsigned i=0; i < [choiz->query_ count]; i++){
-                struct objc_class * result = (struct objc_class *)[choiz->query_ objectAtIndex:i];
+                void * result = (void *)[choiz->query_ objectAtIndex:i];
                 uint64_t result_intv = (uint64_t)result;
                 uint64_t isa_intv = (uint64_t)isa;
                 uint64_t data_intv = (uint64_t)data;
