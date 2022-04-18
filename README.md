@@ -432,6 +432,7 @@ runtime patch instrument in lldb
 
 - [2019/10/17] new  **patcher** :runtime patch instrument in lldb
 
+- [2022/04/18] add xivars/xmethods/xprotocol to enable dump class when ivars/methods not support like in macOS or iOS system process.
   
 
 ## Document
