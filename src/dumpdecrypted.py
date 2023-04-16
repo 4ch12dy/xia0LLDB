@@ -181,7 +181,7 @@ def get_macho_entry_offset(debugger):
             break;
         }
     }
-    char ret[50];
+    char ret[50] = {0};
 
     /*
     char textStartAddrStr[20];
