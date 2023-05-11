@@ -353,12 +353,12 @@ def get_text_segment(debugger, macho_idx):
             }
         }
     }
-    char ret[50];
+    char ret[50] = {0};
 
-    char textStartAddrStr[20];
+    char textStartAddrStr[20] = {0};
     sprintf(textStartAddrStr, "0x%016lx", textStart);
 
-    char textEndAddrStr[20];
+    char textEndAddrStr[20] = {0};
     sprintf(textEndAddrStr, "0x%016lx", textEnd);
 
 
@@ -366,9 +366,9 @@ def get_text_segment(debugger, macho_idx):
     strcpy(ret,textStartAddrStr);
     strcat(ret,splitStr);
     strcat(ret,textEndAddrStr);
-
     ret
     '''
+    
     retStr = exeScript(debugger, command_script)
     return utils.hex_int_in_str(retStr)
 
@@ -395,6 +395,7 @@ def lookup_svc_insn(debugger, startAddr, endAddr):
     retStr
     '''
     retStr = exeScript(debugger, command_script)
+    print(f"------> {retStr}")
     return utils.hex_int_in_str(retStr)
 
 def xia0Hook(debugger, svcAddr):

@@ -199,8 +199,41 @@ def get_all_method_address_of_class(debugger, classname):
     retStr = utils.exe_script(debugger, command_script)
     return retStr
 
+def get_main_image_index(debugger):
+    command_script = '@import Foundation;' 
+    command_script += r'''
+    #define	MH_EXECUTE	0x2		/* demand paged executable file */
+    #ifdef __LP64__
+    typedef struct mach_header_64 mach_header_t;
+    #else
+    typedef struct mach_header mach_header_t;
+    #endif
+    
+    uint32_t idx = 0;
+    for (int i = 0; i < (uint32_t)_dyld_image_count(); i++) {
+        mach_header_t* mh = (mach_header_t*)_dyld_get_image_header(i);
+        if (mh && mh->filetype == MH_EXECUTE) {
+            idx = i;
+            break;        
+        }
+    }
+    
+    char ret[50] = {0};
+
+    sprintf(ret, "$%d$", idx);
+    
+    (char*)ret
+    '''
+    
+    retStr = utils.exe_script(debugger, command_script)
+    retStr = retStr.split("$")[1]
+    return int(retStr)
+
 def get_macho_mod_init_first_func(debugger):
+    idx = get_main_image_index(debugger)
+    utils.ILOG(f"main image idx:{idx}")
     command_script = '@import Foundation;'
+    command_script += f"uint32_t idx = {idx};"
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
 
@@ -258,7 +291,7 @@ def get_macho_mod_init_first_func(debugger):
     };
 
     int x_offset = 0;
-    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
+    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(idx);
 
     if(header->magic != MH_MAGIC_64) {
         return ;
@@ -284,7 +317,7 @@ def get_macho_mod_init_first_func(debugger):
 
                     if (!strcmp(curSection->sectname, "__mod_init_func")) {
                         uint64_t memAddr = curSection->addr;
-                        uint64_t modInitAddrArr = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(0);
+                        uint64_t modInitAddrArr = memAddr + (uint64_t)_dyld_get_image_vmaddr_slide(idx);
                         modInitFirstAddr = *((uint64_t*)modInitAddrArr)
                         break;
                     }
@@ -294,17 +327,20 @@ def get_macho_mod_init_first_func(debugger):
             }
         }
     }
-    char ret[50];
+    char ret[50] = {0};
 
     sprintf(ret, "0x%016lx", modInitFirstAddr);
 
-    ret
+    (char*)ret
     '''
     retStr = utils.exe_script(debugger, command_script)
     return utils.hex_int_in_str(retStr)
 
 def get_macho_entry_offset(debugger):
+    idx = get_main_image_index(debugger)
+    utils.ILOG(f"main image idx:{idx}")
     command_script = '@import Foundation;' 
+    command_script += f"uint32_t idx = {idx};"
     command_script += r'''
     //NSMutableString* retStr = [NSMutableString string];
 
@@ -372,7 +408,7 @@ def get_macho_entry_offset(debugger):
     };
 
     int x_offset = 0;
-    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(0);
+    struct mach_header_64* header = (struct mach_header_64*)_dyld_get_image_header(idx);
 
     if(header->magic != MH_MAGIC_64) {
         return ;
@@ -388,14 +424,14 @@ def get_macho_entry_offset(debugger):
         struct load_command * lcp = (struct load_command *)((uint8_t*)header + x_offset);
         x_offset += lcp->cmdsize;
         if(lcp->cmd == LC_MAIN) {
-            uintptr_t slide =  (uintptr_t)_dyld_get_image_vmaddr_slide(0);          
+            uintptr_t slide =  (uintptr_t)_dyld_get_image_vmaddr_slide(idx);          
             struct entry_point_command* main_cmd = (struct entry_point_command*)lcp;
             main_addr = (uint64_t)slide + main_cmd->entryoff + 0x100000000;
 
             break;
         }
     }
-    char ret[50];
+    char ret[50] = {0};
 
     /*
     char textStartAddrStr[20];
@@ -412,8 +448,8 @@ def get_macho_entry_offset(debugger):
     */
 
     sprintf(ret, "0x%016lx", main_addr);
-
-    ret
+    
+    (char*)ret
     '''
     retStr = utils.exe_script(debugger, command_script)
     return retStr
