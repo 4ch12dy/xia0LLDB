@@ -50,10 +50,8 @@ def handle_command(debugger, command, exe_ctx, result, internal_dict):
     return 
 
 def choose(debugger, classname):
-    command_script = '@import Foundation;NSString * className = @"' + classname + '";' 
+    command_script = '@import Foundation; NSString * className = @"' + classname + '";' 
     command_script += r'''
-    
-    // define
     #define KERN_SUCCESS 0
     
     // typedef
@@ -99,11 +97,10 @@ def choose(debugger, classname):
         size_t  (*pressure_relief)(struct _malloc_zone_t *zone, size_t goal);
     } malloc_zone_t;
     
-
-    struct XZChoice {
-        NSMutableArray * query_; // std::set<Class> query_;
-        NSMutableArray * result_; // std::set<id> result_;
-    };
+    typedef struct XZChoice {
+        void * query_; // std::set<Class> query_;
+        void * result_; // std::set<id> result_;
+    }XZChoice ;
 
     struct XZObjectStruct {
         Class isa_;
@@ -136,7 +133,7 @@ def choose(debugger, classname):
             data = copy;
             size = writ;
         }
-    }
+    };
     // function void choose_(task_t task, void *baton, unsigned type, vm_range_t *ranges, unsigned count)
     typedef void (*choose__t)(task_t task, void *baton, unsigned type, vm_range_t *ranges, unsigned count);
     choose__t choose_ = [](task_t task, void *baton, unsigned type, vm_range_t *ranges, unsigned count) -> void {
@@ -158,8 +155,9 @@ def choose(debugger, classname):
             //[choiz->result_ addObject:[@(p) stringValue]];
 
             size_t needed;
-            for(unsigned i=0; i < [choiz->query_ count]; i++){
-                void * result = (void *)[choiz->query_ objectAtIndex:i];
+            NSMutableArray* query =(NSMutableArray*)(choiz->query_);
+            for(unsigned i=0; i < (int)[(NSMutableArray*)query count]; i++){
+                void * result = (void *)[query objectAtIndex:i];
                 uint64_t result_intv = (uint64_t)result;
                 uint64_t isa_intv = (uint64_t)isa;
                 uint64_t data_intv = (uint64_t)data;
@@ -183,19 +181,20 @@ def choose(debugger, classname):
                             boundary *= 2;
                     #endif
                     
-                    needed = (size_t)class_getInstanceSize((Class)result));
+                    needed = (size_t)class_getInstanceSize((Class)result);
                     if ((needed <= boundary && (needed + 15) / 16 * 16 != size) || (needed > boundary && (needed + 511) / 512 * 512 != size)){
                         continue;
                     }
-                    [choiz->result_ addObject:(id)data];
+                    NSMutableArray* result_ =(NSMutableArray*)(choiz->result_);
+                    [result_ addObject:(id)data];
                 }
             }
         }
-    }
+    };
     
     XZChoice choice;
-    choice.query_ = (NSMutableArray*)[NSMutableArray array];
-    choice.result_ = (NSMutableArray*)[NSMutableArray array];
+    choice.query_ = (void*)[NSMutableArray array];
+    choice.result_ = (void*)[NSMutableArray array];
     
     Class _class = NSClassFromString(className);
     size_t number;
@@ -204,7 +203,8 @@ def choose(debugger, classname):
     for (size_t i = 0; i != number; ++i) {
         for (Class current = classes[i]; current != Nil; current = (Class)class_getSuperclass(current)) {
             if (current == _class) {
-                [choice.query_ addObject:classes[i]];
+                NSMutableArray* query_ =(NSMutableArray*)(choice.query_);
+                [query_ addObject:classes[i]];
                 break;
             }
         }
@@ -223,7 +223,7 @@ def choose(debugger, classname):
         zone->introspect->enumerator((task_t)mach_task_self(), &choice, MALLOC_PTR_IN_USE_RANGE_TYPE, zones[i], task_peek, choose_);
     }
 
-    NSArray* choosed = choice.result_;
+    NSArray* choosed = (NSArray*)choice.result_;
     NSMutableString* retStr = [NSMutableString string];
     unsigned choosedSize = [choosed count];
     if(choosedSize == 0){
